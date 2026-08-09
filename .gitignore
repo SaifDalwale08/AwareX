@@ -1,13 +1,63 @@
+# =========================
+# Python
+# =========================
 venv/
-Dataset/
-runs/
-vidoes/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
 
+# =========================
+# Secrets / Environment
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# AI Models / Training
+# =========================
 *.pt
 *.pth
-__pycache__/
-*.pyc
+*.onnx
+*.engine
+runs/
 
-.env
+# =========================
+# Dataset
+# =========================
+dataset/
+Dataset/
 
+# =========================
+# Videos / Uploaded Media
+# =========================
+videos/
+vidoes/
+uploads/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+*.tmp
+
+# =========================
+# Logs
+# =========================
+*.log
 frontend/server*.log
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

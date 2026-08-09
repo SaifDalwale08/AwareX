@@ -288,12 +288,13 @@
         name: file.name, size: fmtBytes(file.size), bytes: file.size,
         duration: fmtTime(probe.duration),
         resolution: (probe.videoWidth || 0) + " x " + (probe.videoHeight || 0),
-        fps: 30, type: file.type || "video/mp4", url: url
+        fps: 30, type: file.type || "video/mp4", url: url,
+        file: file
       };
       showFileStage();
     };
     probe.onerror = function () {
-      pendingFile = { name: file.name, size: fmtBytes(file.size), bytes: file.size, duration: "-", resolution: "-", fps: 30, type: file.type, url: url };
+      pendingFile = { name: file.name, size: fmtBytes(file.size), bytes: file.size, duration: "-", resolution: "-", fps: 30, type: file.type, url: url, file: file };
       showFileStage();
     };
     probe.src = url;
@@ -320,7 +321,7 @@
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">' +
       '<button class="ax-btn ax-btn--primary" id="axStartAnalysis"><span class="material-symbols-outlined">bolt</span>START AI ANALYSIS</button>' +
       '<button class="ax-btn ax-btn--ghost" id="axChangeFile">Choose another file</button></div>' +
-      '<p style="font-size:12px;color:var(--ax-muted);margin-top:12px;">DEMO MODE - results are simulated. Connect FastAPI + YOLO + OpenCV to produce real detections.</p>' +
+      '<p style="font-size:12px;color:var(--ax-muted);margin-top:12px;">Ready for real AI video analysis through FastAPI, OpenCV, and YOLO.</p>' +
       "</div></div></div>";
 
     $("#axStartAnalysis").addEventListener("click", startAnalysis);
@@ -335,7 +336,7 @@
     var prog = $("#axAnalysisProgress");
     prog.style.display = "";
     var steps = ["Extracting frames (OpenCV)", "Detecting workers &amp; PPE (YOLO)", "Tracking workers across frames", "Scoring risk (ML model)", "Generating decision intelligence"];
-    prog.innerHTML = '<div class="ax-card"><h4 class="ax-card__title">Analyzing video</h4><p class="ax-card__sub">DEMO MODE pipeline simulation</p>' +
+    prog.innerHTML = '<div class="ax-card"><h4 class="ax-card__title">Analyzing video</h4><p class="ax-card__sub">AI video analysis pipeline running</p>' +
       '<div class="ax-progress" style="height:10px;"><span id="axProgBar"></span></div>' +
       '<div id="axProgStep" style="font-size:13px;color:var(--ax-muted);margin-top:12px;"></div>' +
       '<div style="display:grid;gap:10px;margin-top:16px;">' +
@@ -354,7 +355,11 @@
       prog.style.display = "none";
       renderResult();
       renderAll();
-      toast("Analysis complete (DEMO MODE).", "success");
+      toast("Analysis complete.", "success");
+    }).catch(function (error) {
+      clearInterval(iv);
+      prog.style.display = "none";
+      toast(error.message || "Video analysis failed.", "error");
     });
   }
 
@@ -366,7 +371,7 @@
     stage.innerHTML =
       '<div class="ax-card" style="margin-bottom:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">' +
       '<h4 class="ax-card__title" style="margin:0;">Analysis Result</h4>' +
-      '<span class="ax-chip ax-chip--demo">DEMO MODE - simulated detections</span>' +
+      '<span class="ax-chip ax-chip--demo">AI video analysis results</span>' +
       '<div style="flex:1"></div>' +
       '<button class="ax-btn ax-btn--soft ax-btn--sm" data-goto="reports">Open Reports</button>' +
       '<button class="ax-btn ax-btn--soft ax-btn--sm" data-goto="decision-intelligence">Decision Intelligence</button></div>' +
