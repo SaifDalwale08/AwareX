@@ -1,0 +1,180 @@
+/* =========================================================
+   AwareX - Responsive rules
+   Loaded by every page, after style.css / auth.css.
+   Breakpoints checked: 1920, 1440, 1280, 1024, 768, 480, 390, 375
+   ========================================================= */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Large desktop (1920px+) ---------- */
+@media (min-width: 1920px) {
+  .max-w-7xl {
+    max-width: 88rem;
+  }
+}
+
+/* ---------- Laptop (1280px - 1440px) ---------- */
+@media (max-width: 1440px) {
+  section[id],
+  div[id] {
+    scroll-margin-top: 88px;
+  }
+
+  .auth-layout {
+    grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+  }
+
+  .auth-brand-panel {
+    padding: 36px clamp(22px, 2.8vw, 44px);
+  }
+
+  .auth-form-panel {
+    padding: 24px clamp(20px, 2.5vw, 40px);
+  }
+
+  .auth-brand-logo img {
+    max-width: 116px;
+  }
+
+  .auth-card-logo {
+    max-width: 112px;
+  }
+}
+
+/* ---------- Small laptop / tablet landscape (<= 1024px) ---------- */
+@media (max-width: 1024px) {
+  .auth-layout {
+    grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
+  }
+
+  .auth-brand-copy h2 {
+    font-size: clamp(1.9rem, 3vw, 3rem);
+  }
+
+  .auth-form-shell {
+    max-width: 40rem;
+  }
+
+  .auth-analytics {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-social-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Tablet (<= 768px) ---------- */
+@media (max-width: 768px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-brand-panel {
+    display: none;
+  }
+
+  .auth-form-panel {
+    padding: 24px 20px 32px;
+  }
+
+  .auth-form-shell {
+    max-width: 100%;
+  }
+
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-grid .auth-span-2 {
+    grid-column: span 1;
+  }
+
+  .auth-top-row {
+    justify-content: flex-start;
+  }
+
+  .auth-brand-logo img,
+  .auth-card-logo {
+    max-width: 108px;
+  }
+}
+
+/* ---------- Large phone (<= 480px) ---------- */
+@media (max-width: 480px) {
+  body {
+    font-size: 15px;
+  }
+
+  .px-container-padding {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .auth-form-panel {
+    padding: 20px 16px 28px;
+  }
+
+  .auth-form-shell {
+    max-width: 100%;
+  }
+
+  .auth-title {
+    font-size: 1.9rem;
+    line-height: 1.08;
+  }
+
+  .auth-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .auth-card {
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .auth-social-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-btn,
+  .auth-input,
+  .auth-social-button {
+    height: 50px;
+  }
+
+  .auth-brand-logo img,
+  .auth-card-logo {
+    max-width: 100px;
+  }
+}
+
+/* ---------- Small phone (<= 390px / 375px) ---------- */
+@media (max-width: 390px) {
+  .auth-card {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .px-container-padding {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .auth-success-card h2 {
+    font-size: 24px;
+  }
+}

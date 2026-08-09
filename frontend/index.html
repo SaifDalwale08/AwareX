@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AwareX - AI-Powered Workforce Safety</title>
+<meta content="AwareX turns camera feeds into decision intelligence for workforce safety." name="description"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="js/tailwind-config.js"></script>
+<link href="css/style.css" rel="stylesheet"/>
+<link href="css/responsive.css" rel="stylesheet"/>
+<script defer src="js/navigation.js"></script>
+<script defer src="js/main.js"></script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/30 dark:border-outline/20 shadow-sm transition-all duration-300" id="topNav">
+<div class="flex justify-between items-center px-container-padding py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-2">
+<img alt="AwareX" class="h-8 md:h-10 w-auto object-contain mix-blend-multiply dark:mix-blend-normal" src="assets/logo/awarex-logo.png" decoding="async"/>
+</div>
+<div class="hidden md:flex items-center space-x-gutter">
+<a class="text-primary dark:text-primary-fixed font-bold border-b-2 border-primary pb-1 text-label-sm font-label-sm transition-colors hover:opacity-80" href="#home">Home</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#features">Features</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#solutions">Solutions</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#dashboard">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#technology">Technology</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#contact">Contact</a>
+</div>
+<div class="flex items-center gap-3">
+<button aria-controls="mobileMenu" aria-expanded="false" aria-label="Open menu" class="nav-toggle lg:hidden inline-flex items-center justify-center h-[44px] w-[44px] rounded-lg text-on-surface-variant hover:text-primary transition-colors" id="navToggle" type="button"><span class="material-symbols-outlined">menu</span></button>
+<a href="login.html" class="hidden sm:flex text-on-surface-variant hover:text-primary font-label-sm text-label-sm px-3 py-2.5 rounded-lg transition-colors h-[44px] items-center justify-center">Sign In</a>
+<a href="login.html" class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-sm text-label-sm hover:opacity-90 active:scale-95 transition-all shadow-[0_10px_40px_rgba(15,23,42,0.05)] h-[44px] flex items-center justify-center">
+                    Get Started
+                </a>
+</div>
+</div>
+<div class="mobile-menu lg:hidden border-t border-outline-variant/30 bg-surface/95 backdrop-blur-xl" id="mobileMenu">
+<div class="flex flex-col px-container-padding py-4 gap-1 max-w-7xl mx-auto">
+<a class="mobile-link text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm py-2.5" href="#home">Home</a>
+<a class="mobile-link text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm py-2.5" href="#features">Features</a>
+<a class="mobile-link text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm py-2.5" href="#solutions">Solutions</a>
+<a class="mobile-link text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm py-2.5" href="#dashboard">Dashboard</a>
+<a class="mobile-link text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm py-2.5" href="#technology">Technology</a>
+<a class="mobile-link text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm py-2.5" href="#contact">Contact</a>
+<a class="text-primary font-bold text-label-sm font-label-sm py-2.5" href="login.html">Sign In</a>
+<a class="text-primary font-bold text-label-sm font-label-sm py-2.5" href="register.html">Get Started</a>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative pt-32 pb-24 lg:pt-48 lg:pb-32 overflow-hidden px-container-padding max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-gutter fade-in-section" id="home">
+<div class="w-full lg:w-1/2 z-10 flex flex-col gap-stack-md">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/10 text-primary w-fit border border-primary/20">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label-sm text-label-sm">Next-Gen Industrial Vision</span>
+</div>
+<h1 class="text-display-lg-mobile font-display-lg-mobile md:text-display-lg md:font-display-lg text-on-surface">
+                Transform Ordinary CCTV into AI-Powered <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-surface-tint">Workforce Safety</span>
+</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl">
+                Deploy advanced computer vision models to existing camera infrastructure. Real-time PPE detection, hazard alerts, and automated compliance reporting for industrial environments.
+            </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<a href="login.html" class="bg-primary text-on-primary px-8 py-3 rounded-lg font-label-sm text-label-sm hover:opacity-90 active:scale-95 transition-all shadow-[0_10px_40px_rgba(15,23,42,0.1)] h-[44px] flex items-center justify-center gap-2">
+                    Get Started
+                </a>
+<button class="bg-surface text-on-surface border border-outline-variant px-8 py-3 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant active:scale-95 transition-all h-[44px] flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+                    Watch Live Demo
+                </button>
+</div>
+</div>
+<div class="w-full lg:w-1/2 relative z-10 mt-12 lg:mt-0">
+<div class="relative rounded-xl overflow-hidden shadow-[0_20px_60px_rgba(15,23,42,0.08)] border border-outline-variant/30">
+<img alt="AwareX AI-powered safety monitoring of a factory floor with real-time worker PPE detection overlays" class="w-full h-auto block" src="assets/images/awarex-01.webp" loading="eager" fetchpriority="high" decoding="async"/>
+</div>
+<!-- Decorative blur -->
+<div class="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-primary/20 blur-[100px] rounded-full"></div>
+</div>
+</header>
+<!-- Trusted Industries -->
+<section class="py-stack-lg bg-surface-container-lowest border-y border-outline-variant/30 fade-in-section" id="solutions">
+<div class="max-w-7xl mx-auto px-container-padding">
+<p class="text-center text-label-sm font-label-sm text-on-surface-variant mb-stack-md uppercase tracking-wider">Trusted across critical industries</p>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-gutter">
+<div class="flex flex-col items-center justify-center p-4 bg-surface rounded-lg border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="text-label-sm font-label-sm text-on-surface">Manufacturing</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4 bg-surface rounded-lg border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="construction">construction</span>
+<span class="text-label-sm font-label-sm text-on-surface">Construction</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4 bg-surface rounded-lg border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="oil_barrel">oil_barrel</span>
+<span class="text-label-sm font-label-sm text-on-surface">Oil & Gas</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4 bg-surface rounded-lg border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="landscape">landscape</span>
+<span class="text-label-sm font-label-sm text-on-surface">Mining</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4 bg-surface rounded-lg border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="warehouse">warehouse</span>
+<span class="text-label-sm font-label-sm text-on-surface">Warehousing</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4 bg-surface rounded-lg border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="local_shipping">local_shipping</span>
+<span class="text-label-sm font-label-sm text-on-surface">Logistics</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="py-24 max-w-7xl mx-auto px-container-padding fade-in-section" id="features">
+<div class="text-center mb-16">
+<h2 class="text-display-lg-mobile font-display-lg-mobile md:text-headline-md md:font-headline-md text-on-surface mb-4">Powerful AI Safety Features</h2>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl mx-auto">Comprehensive monitoring suite that integrates directly with your existing VMS, turning passive video feeds into proactive safety tools.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Feature 1 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-[0_10px_40px_rgba(15,23,42,0.05)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] feature-card group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="h-48 mb-6 rounded-lg overflow-hidden border border-outline-variant/20 flex items-center justify-center bg-surface">
+<img alt="AwareX AI PPE detection identifying helmet, vest, gloves, and safety shoes on a worker" class="w-full h-full object-cover object-center block" src="assets/images/awarex-02.webp" loading="lazy" decoding="async"/>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-2">PPE Detection</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Real-time verification of hard hats, high-vis vests, safety glasses, and other mandated gear.</p>
+</div>
+<!-- Feature 2 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-[0_10px_40px_rgba(15,23,42,0.05)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] feature-card">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="h-48 mb-6 rounded-lg overflow-hidden border border-outline-variant/20 flex items-center justify-center bg-surface">
+<img alt="AwareX worker tracking showing real-time location and movement paths of multiple workers across factory zones" class="w-full h-full object-cover object-center block" src="assets/images/awarex-03.webp" loading="lazy" decoding="async"/>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-2">Worker Tracking</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Monitor movement patterns to optimize workflows and identify bottleneck areas safely.</p>
+</div>
+<!-- Feature 3 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-[0_10px_40px_rgba(15,23,42,0.05)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] feature-card">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="h-48 mb-6 rounded-lg overflow-hidden border border-outline-variant/20 flex items-center justify-center bg-surface">
+<img alt="AwareX restricted zone detection flagging a worker intrusion into a hazardous geofenced area" class="w-full h-full object-cover object-center block" src="assets/images/awarex-04.webp" loading="lazy" decoding="async"/>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-2">Restricted Zone Detection</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Instant alerts when personnel enter geofenced hazardous areas or approach active machinery.</p>
+</div>
+<!-- Feature 4 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-[0_10px_40px_rgba(15,23,42,0.05)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] feature-card">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="h-48 mb-6 rounded-lg overflow-hidden border border-outline-variant/20 flex items-center justify-center bg-surface relative">
+<img alt="AwareX decision intelligence engine evaluating risk context and recommending machine shutdown" class="w-full h-full object-cover object-center block" src="assets/images/awarex-05.webp" loading="lazy" decoding="async"/>
+<!-- Shimmering badge -->
+<div class="absolute top-2 right-2 bg-gradient-to-r from-primary to-surface-tint text-on-primary px-2 py-1 rounded text-xs font-label-sm shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="auto_awesome">auto_awesome</span> AI Insight
+                    </div>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-2">Decision Intelligence</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Context-aware algorithms that analyze scenes to recommend immediate safety interventions.</p>
+</div>
+<!-- Feature 5 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-[0_10px_40px_rgba(15,23,42,0.05)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] feature-card">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="h-48 mb-6 rounded-lg overflow-hidden border border-outline-variant/20 flex items-center justify-center bg-surface">
+<img alt="AwareX real-time safety alert dispatched to a supervisor's control room and mobile device" class="w-full h-full object-cover object-center block" src="assets/images/awarex-06.webp" loading="lazy" decoding="async"/>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-2">Real-Time Alerts</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Push notifications and SMS dispatched instantly to floor managers when violations occur.</p>
+</div>
+<!-- Feature 6 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-[0_10px_40px_rgba(15,23,42,0.05)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)] feature-card">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="h-48 mb-6 rounded-lg overflow-hidden border border-outline-variant/20 flex items-center justify-center bg-surface">
+<img alt="AwareX compliance analytics dashboard showing PPE compliance score, trends, and violation breakdowns" class="w-full h-full object-cover object-center block" src="assets/images/awarex-07.webp" loading="lazy" decoding="async"/>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-2">Compliance Analytics</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Automated daily reports tracking safety scores, recurring issues, and overall facility health.</p>
+</div>
+</div>
+</section>
+<!-- Decision Intelligence / Split Section -->
+<section class="py-24 bg-surface-container-low fade-in-section relative overflow-hidden" id="technology">
+<div class="max-w-7xl mx-auto px-container-padding flex flex-col lg:flex-row items-center gap-16">
+<div class="w-full lg:w-1/2">
+<h2 class="text-display-lg-mobile font-display-lg-mobile md:text-headline-md md:font-headline-md text-on-surface mb-6">Proactive Safety with Decision Intelligence</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mb-8">
+                    Our proprietary models do more than draw bounding boxes. They understand spatial context, equipment status, and personnel authorization to make split-second recommendations.
+                </p>
+<ul class="space-y-4 mb-8">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle">check_circle</span>
+<span class="text-body-md font-body-md text-on-surface">Sub-50ms inference latency for immediate action</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle">check_circle</span>
+<span class="text-body-md font-body-md text-on-surface">Integration with logic controllers to auto-stop machinery</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle">check_circle</span>
+<span class="text-body-md font-body-md text-on-surface">Edge-deployable to ensure uptime without internet</span>
+</li>
+</ul>
+<a class="inline-flex items-center gap-2 text-primary font-label-sm text-label-sm hover:underline" href="#">
+                    Read the Whitepaper <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<div class="w-full lg:w-1/2 relative flex justify-center">
+<!-- Abstract visualization background -->
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-surface-tint/5 rounded-full blur-3xl"></div>
+<!-- Decision Card (HUD style) -->
+<div class="glass-panel p-stack-md rounded-xl shadow-[0_20px_60px_rgba(15,23,42,0.1)] w-full max-w-md relative z-10">
+<div class="flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface">Intervention Required</span>
+</div>
+<span class="text-code-mono font-code-mono text-xs text-on-surface-variant">Live Feed B2</span>
+</div>
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-center bg-surface p-3 rounded border border-outline-variant/20">
+<span class="text-body-md font-body-md text-on-surface-variant">Subject:</span>
+<span class="text-body-md font-body-md font-bold text-on-surface">Worker #03</span>
+</div>
+<div class="flex justify-between items-center bg-error/10 p-3 rounded border border-error/20">
+<span class="text-body-md font-body-md text-on-surface-variant">Violation:</span>
+<span class="text-body-md font-body-md font-bold text-error">Helmet Missing</span>
+</div>
+<div class="flex justify-between items-center bg-surface p-3 rounded border border-outline-variant/20">
+<span class="text-body-md font-body-md text-on-surface-variant">Risk Level:</span>
+<span class="text-body-md font-body-md font-bold text-on-surface">Critical</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 mb-4">
+<div class="bg-surface p-2 rounded border border-outline-variant/20 text-center"><span class="text-code-mono text-xs text-on-surface-variant">Restricted Zone</span></div>
+<div class="bg-surface p-2 rounded border border-outline-variant/20 text-center"><span class="text-code-mono text-xs text-on-surface-variant">Running Machine</span></div>
+</div>
+<div class="flex flex-col items-center mb-3">
+<span class="material-symbols-outlined text-primary/60 text-base">arrow_downward</span>
+<div class="w-full bg-primary-container/10 border border-primary/20 rounded p-2 text-center"><span class="text-label-sm font-label-sm text-primary">Context Analysis</span></div>
+<span class="material-symbols-outlined text-primary/60 text-base">arrow_downward</span>
+</div>
+<div class="bg-surface-tint text-on-primary p-4 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-primary transition-colors">
+<span class="font-label-sm text-label-sm mb-1 uppercase tracking-wider text-on-primary/80">AI Recommendation</span>
+<span class="text-body-lg font-body-lg font-bold">Stop Machine B2</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+<div class="bg-surface p-2 rounded border border-outline-variant/20 text-center text-code-mono text-xs text-on-surface-variant">Notify Supervisor</div>
+<div class="bg-surface p-2 rounded border border-outline-variant/20 text-center text-code-mono text-xs text-on-surface-variant">Provide PPE</div>
+<div class="bg-surface p-2 rounded border border-outline-variant/20 text-center text-code-mono text-xs text-on-surface-variant">Escalate Incident</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Dashboard Preview -->
+<section class="py-24 max-w-7xl mx-auto px-container-padding text-center fade-in-section" id="dashboard">
+<h2 class="text-display-lg-mobile font-display-lg-mobile md:text-headline-md md:font-headline-md text-on-surface mb-4">Enterprise Safety Dashboard</h2>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl mx-auto mb-12">A centralized command center providing real-time operational visibility and historical compliance data.</p>
+<div class="relative rounded-xl overflow-hidden shadow-[0_30px_80px_rgba(15,23,42,0.1)] border border-outline-variant/30 bg-surface-container-lowest max-w-5xl mx-auto">
+<img alt="AwareX Enterprise Safety Dashboard showing compliance metrics, live monitoring, and worker safety scores" class="w-full h-auto block" src="assets/images/awarex-08.webp" loading="lazy" decoding="async"/>
+</div>
+</section>
+<!-- Statistics Counters -->
+<section class="py-16 bg-primary text-on-primary border-y border-primary-fixed-dim/20 fade-in-section">
+<div class="max-w-7xl mx-auto px-container-padding">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x-0 md:divide-x divide-on-primary/20">
+<div class="flex flex-col items-center justify-center p-4">
+<span class="text-display-lg-mobile font-display-lg-mobile font-bold mb-2">99%</span>
+<span class="text-label-sm font-label-sm text-on-primary/80 uppercase tracking-wider">Detection Accuracy</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4">
+<span class="text-display-lg-mobile font-display-lg-mobile font-bold mb-2">500+</span>
+<span class="text-label-sm font-label-sm text-on-primary/80 uppercase tracking-wider">Cameras Deployed</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4">
+<span class="text-display-lg-mobile font-display-lg-mobile font-bold mb-2">150K+</span>
+<span class="text-label-sm font-label-sm text-on-primary/80 uppercase tracking-wider">Workers Protected</span>
+</div>
+<div class="flex flex-col items-center justify-center p-4">
+<span class="text-display-lg-mobile font-display-lg-mobile font-bold mb-2">24/7</span>
+<span class="text-label-sm font-label-sm text-on-primary/80 uppercase tracking-wider">Continuous Monitoring</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-24 max-w-7xl mx-auto px-container-padding bg-surface-bright fade-in-section">
+<div class="text-center mb-16">
+<h2 class="text-display-lg-mobile font-display-lg-mobile md:text-headline-md md:font-headline-md text-on-surface mb-4">Trusted by Safety Leaders</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex text-surface-tint mb-4">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant italic mb-6">"AwareX transformed our chaotic warehouse floor into a predictable, measurable environment. The PPE detection alone paid for itself in reduced compliance fines."</p>
+</div>
+<div class="flex items-center gap-4 pt-4 border-t border-outline-variant/20">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-bold">JD</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface">James Dempsey</p>
+<p class="text-code-mono text-xs text-on-surface-variant">HSE Director, Global Logistics Corp</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex text-surface-tint mb-4">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant italic mb-6">"The integration with our existing legacy CCTV system was seamless. We didn't need to replace hardware; we just made it significantly smarter."</p>
+</div>
+<div class="flex items-center gap-4 pt-4 border-t border-outline-variant/20">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-bold">SR</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface">Sarah Reiley</p>
+<p class="text-code-mono text-xs text-on-surface-variant">Operations Manager, SteelWorks Inc.</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex text-surface-tint mb-4">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant italic mb-6">"Decision Intelligence is a game-changer. The system actually warned us about a potential collision path between a forklift and a worker before it happened."</p>
+</div>
+<div class="flex items-center gap-4 pt-4 border-t border-outline-variant/20">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-bold">MW</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface">Marcus Wei</p>
+<p class="text-code-mono text-xs text-on-surface-variant">VP Engineering, AutoBuild Ltd.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-32 relative overflow-hidden fade-in-section">
+<!-- Background image -->
+<div class="absolute inset-0 z-0">
+<svg class="w-full h-full object-cover" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" role="img"><rect width="1200" height="600" fill="#f7f9fb"/><path d="M0 430h1200v170H0z" fill="#e9f0ff"/><g fill="#dbe1ff" opacity=".8"><rect x="60" y="180" width="180" height="250" rx="10"/><rect x="960" y="150" width="200" height="280" rx="10"/><rect x="300" y="240" width="140" height="190" rx="10"/></g><g transform="translate(120,90) scale(1,1)"><rect x="0" y="0" width="30" height="14" rx="4" fill="#46566c"/><path d="M30 4l10-5v16l-10-5z" fill="#46566c"/><rect x="12" y="-10" width="4" height="10" fill="#46566c"/><circle cx="8" cy="7" r="3" fill="#e9f0ff"/></g><g transform="translate(1040,90) scale(-1,1)"><rect x="0" y="0" width="30" height="14" rx="4" fill="#46566c"/><path d="M30 4l10-5v16l-10-5z" fill="#46566c"/><rect x="12" y="-10" width="4" height="10" fill="#46566c"/><circle cx="8" cy="7" r="3" fill="#e9f0ff"/></g><g transform="translate(500,150)"><rect width="240" height="150" rx="12" fill="#46566c" opacity=".85"/><circle cx="180" cy="80" r="30" fill="#e9f0ff"/></g><g transform="translate(300,400) scale(1.6)"><path d="M-14 -30c0-9 7-16 14-16s14 7 14 16z" fill="#f5b301"/><rect x="-17" y="-31" width="34" height="5" rx="2.5" fill="#f5b301"/><circle cx="0" cy="-18" r="10" fill="#f0d9c4"/><path d="M-16 -8h32l6 40h-44z" fill="#2563eb"/><rect x="-6" y="-8" width="12" height="32" rx="2" fill="#ffffff" opacity=".55"/><rect x="-14" y="32" width="11" height="26" rx="3" fill="#46566c"/><rect x="3" y="32" width="11" height="26" rx="3" fill="#46566c"/></g><g transform="translate(640,410) scale(1.5)"><path d="M-14 -30c0-9 7-16 14-16s14 7 14 16z" fill="#004ac6"/><rect x="-17" y="-31" width="34" height="5" rx="2.5" fill="#004ac6"/><circle cx="0" cy="-18" r="10" fill="#f0d9c4"/><path d="M-16 -8h32l6 40h-44z" fill="#0053db"/><rect x="-6" y="-8" width="12" height="32" rx="2" fill="#ffffff" opacity=".55"/><rect x="-14" y="32" width="11" height="26" rx="3" fill="#46566c"/><rect x="3" y="32" width="11" height="26" rx="3" fill="#46566c"/></g><g transform="translate(880,400) scale(1.5)"><path d="M-14 -30c0-9 7-16 14-16s14 7 14 16z" fill="#004ac6"/><rect x="-17" y="-31" width="34" height="5" rx="2.5" fill="#004ac6"/><circle cx="0" cy="-18" r="10" fill="#f0d9c4"/><path d="M-16 -8h32l6 40h-44z" fill="#46566c"/><rect x="-6" y="-8" width="12" height="32" rx="2" fill="#ffffff" opacity=".55"/><rect x="-14" y="32" width="11" height="26" rx="3" fill="#46566c"/><rect x="3" y="32" width="11" height="26" rx="3" fill="#46566c"/></g><g><rect x="240" y="270" width="120" height="150" rx="4" stroke="#004ac6" stroke-width="2.5" fill="#004ac6" fill-opacity=".08"/><rect x="240" y="254" width="53" height="16" rx="3" fill="#004ac6"/><text x="245" y="266" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#ffffff">PPE OK</text></g><g><rect x="590" y="290" width="100" height="140" rx="4" stroke="#0053db" stroke-width="2.5" fill="#0053db" fill-opacity=".08"/><rect x="590" y="274" width="53" height="16" rx="3" fill="#0053db"/><text x="595" y="286" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#ffffff">PPE OK</text></g><g><rect x="830" y="280" width="100" height="140" rx="4" stroke="#2563eb" stroke-width="2.5" fill="#2563eb" fill-opacity=".08"/><rect x="830" y="264" width="60" height="16" rx="3" fill="#2563eb"/><text x="835" y="276" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#ffffff">TRACKED</text></g><g transform="translate(720,60)"><rect width="400" height="150" rx="14" fill="#ffffff" opacity=".9"/><text x="20" y="34" font-family="Inter" font-size="15" font-weight="700" fill="#004ac6">AwareX Safety Dashboard</text><rect x="20" y="50" width="170" height="40" rx="8" fill="#e9f0ff"/><text x="32" y="76" font-family="Inter" font-size="13" font-weight="700" fill="#004ac6">94% Compliance</text><rect x="204" y="50" width="176" height="40" rx="8" fill="#ba1a1a" fill-opacity=".14"/><text x="216" y="76" font-family="Inter" font-size="13" font-weight="700" fill="#ba1a1a">Risk: Critical</text><rect x="20" y="100" width="360" height="34" rx="8" fill="#004ac6"/><text x="32" y="123" font-family="Inter" font-size="13" font-weight="700" fill="#fff">Decision Intelligence · Stop Machine B2</text></g></svg>
+<div class="absolute inset-0 bg-surface/90"></div>
+</div>
+<div class="max-w-4xl mx-auto px-container-padding relative z-10 text-center">
+<h2 class="text-display-lg-mobile font-display-lg-mobile md:text-display-lg md:font-display-lg text-on-surface mb-6">Make Every Camera Smarter with AwareX</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mb-10 max-w-2xl mx-auto">
+                Join industry leaders who are proactive, not reactive, about workforce safety. Book a personalized demo to see AwareX process your facility's video data in real-time.
+            </p>
+<a href="register.html" class="bg-primary text-on-primary px-10 py-4 rounded-xl font-label-sm text-label-sm text-lg hover:bg-surface-tint active:scale-95 transition-all shadow-[0_10px_40px_rgba(0,74,198,0.3)] inline-flex items-center gap-3">
+                Get Started
+                <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- Footer Component from JSON -->
+<footer id="contact" class="bg-surface-container-lowest dark:bg-inverse-surface w-full py-stack-lg border-t border-outline-variant dark:border-outline">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter px-container-padding max-w-7xl mx-auto">
+<div class="col-span-2 md:col-span-1 mb-6 md:mb-0">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-2xl" data-weight="fill">camera_indoor</span>
+<span class="text-headline-md font-headline-md text-on-surface dark:text-inverse-on-surface tracking-tight">AwareX</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant mb-4">Industrial Intelligence & Safety</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant text-xs">© 2024 AwareX Industrial Intelligence. All rights reserved.</p>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface font-bold mb-4 uppercase tracking-wider">Company</h4>
+<ul class="space-y-2">
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">About Us</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Careers</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Contact</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface font-bold mb-4 uppercase tracking-wider">Legal</h4>
+<ul class="space-y-2">
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Privacy Policy</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Terms of Service</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Security</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface font-bold mb-4 uppercase tracking-wider">Connect</h4>
+<ul class="space-y-2">
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">LinkedIn</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">GitHub</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Twitter</a></li>
+</ul>
+</div>
+</div>
+</footer>
+
+</body>
+</html>

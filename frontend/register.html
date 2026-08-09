@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Account - AwareX</title>
+<meta content="Create your AwareX account and start building a safer workplace." name="description"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="css/auth.css" rel="stylesheet"/>
+<link href="css/responsive.css" rel="stylesheet"/>
+<script defer src="js/auth.js"></script>
+</head>
+<body class="auth-page">
+<main class="auth-layout">
+<section class="auth-brand-panel" aria-label="AwareX brand panel">
+<div class="auth-brand-panel-inner">
+<a class="auth-brand-logo" href="index.html">
+<img alt="AwareX" src="assets/logo/awarex-logo.png"/>
+</a>
+<div class="auth-brand-copy">
+<span class="auth-brand-eyebrow">AwareX</span>
+<h2>Turn workplace vision into intelligent safety decisions.</h2>
+<p>Monitor workforce safety, detect risks in real time, and transform industrial CCTV into actionable safety intelligence.</p>
+</div>
+<ul class="auth-benefits">
+<li class="auth-benefit"><span class="auth-benefit-index">01</span><div><strong>Real-Time Safety Visibility</strong><span>See critical events as they happen across every monitored zone.</span></div></li>
+<li class="auth-benefit"><span class="auth-benefit-index">02</span><div><strong>AI-Powered Risk Intelligence</strong><span>Prioritize hazards with context-aware analytics and scoring.</span></div></li>
+<li class="auth-benefit"><span class="auth-benefit-index">03</span><div><strong>Faster Incident Response</strong><span>Route alerts to the right teams with less delay.</span></div></li>
+</ul>
+<div class="auth-analytics">
+<div class="auth-analytics-card"><span>Live</span><strong>24/7</strong><small>Industrial safety monitoring</small></div>
+<div class="auth-analytics-card"><span>Risk</span><strong>AI</strong><small>Context-driven decision support</small></div>
+<div class="auth-analytics-card"><span>Action</span><strong>Fast</strong><small>Alert routing and escalation</small></div>
+</div>
+</div>
+</section>
+
+<section class="auth-form-panel">
+<div class="auth-form-shell">
+<div class="auth-top-row">
+<a class="auth-back" href="index.html"><span class="material-symbols-outlined" aria-hidden="true" style="font-size:18px">arrow_back</span><span>Back to Home</span></a>
+</div>
+
+<div class="auth-card">
+<div class="auth-card-header">
+<span class="auth-badge">GET STARTED</span>
+<a class="auth-brand-logo" href="index.html"><img alt="AwareX" class="auth-card-logo" src="assets/logo/awarex-logo.png"/></a>
+<h1 class="auth-title">Create your AwareX account</h1>
+<p class="auth-subtitle">Start building a safer, smarter workplace with AwareX.</p>
+</div>
+
+<div class="auth-alert auth-alert-error" id="authError" role="alert"></div>
+<div class="auth-alert auth-alert-success" id="authSuccess" role="status" aria-live="polite"></div>
+
+<div class="auth-view" data-auth-form-view="register">
+<form class="auth-form auth-grid" id="registerForm" novalidate>
+<div class="auth-field">
+<label class="auth-label" for="reg-first">First Name</label>
+<input autocomplete="given-name" class="auth-input" id="reg-first" name="firstName" placeholder="First name" type="text"/>
+<p class="auth-error" data-error-for="reg-first"></p>
+</div>
+
+<div class="auth-field">
+<label class="auth-label" for="reg-last">Last Name</label>
+<input autocomplete="family-name" class="auth-input" id="reg-last" name="lastName" placeholder="Last name" type="text"/>
+<p class="auth-error" data-error-for="reg-last"></p>
+</div>
+
+<div class="auth-field">
+<label class="auth-label" for="reg-email">Work Email</label>
+<input autocomplete="email" class="auth-input" id="reg-email" name="email" placeholder="name@company.com" type="email"/>
+<p class="auth-error" data-error-for="reg-email"></p>
+</div>
+
+<div class="auth-field">
+<label class="auth-label" for="reg-phone">Phone Number</label>
+<input autocomplete="tel" class="auth-input" id="reg-phone" name="phone" placeholder="Phone number" type="tel"/>
+<p class="auth-error" data-error-for="reg-phone"></p>
+</div>
+
+<div class="auth-field">
+<label class="auth-label" for="reg-company">Company / Organization</label>
+<input autocomplete="organization" class="auth-input" id="reg-company" name="company" placeholder="Company name" type="text"/>
+<p class="auth-error" data-error-for="reg-company"></p>
+</div>
+
+<div class="auth-field">
+<label class="auth-label" for="reg-title">Job Title</label>
+<input autocomplete="organization-title" class="auth-input" id="reg-title" name="title" placeholder="Job title" type="text"/>
+<p class="auth-error" data-error-for="reg-title"></p>
+</div>
+
+<div class="auth-field auth-span-2">
+<label class="auth-label" for="reg-password">Password</label>
+<div class="auth-input-group auth-password">
+<input autocomplete="new-password" class="auth-input" id="reg-password" name="password" placeholder="Create a password" type="password"/>
+<button aria-label="Show password" aria-pressed="false" class="auth-toggle-pw" data-toggle-password="reg-password" type="button"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button>
+</div>
+<div class="auth-strength" data-password-strength>
+<div class="auth-strength-track"><div class="auth-strength-fill"></div></div>
+<span class="auth-strength-label" data-strength-label>Weak</span>
+<ul class="auth-requirements">
+<li data-strength-rule="length">At least 8 characters</li>
+<li data-strength-rule="upper">One uppercase letter</li>
+<li data-strength-rule="number">One number</li>
+</ul>
+</div>
+<p class="auth-error" data-error-for="reg-password"></p>
+</div>
+
+<div class="auth-field auth-span-2">
+<label class="auth-label" for="reg-confirm">Confirm Password</label>
+<div class="auth-input-group auth-password">
+<input autocomplete="new-password" class="auth-input" id="reg-confirm" name="confirmPassword" placeholder="Confirm your password" type="password"/>
+<button aria-label="Show password" aria-pressed="false" class="auth-toggle-pw" data-toggle-password="reg-confirm" type="button"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button>
+</div>
+<p class="auth-error" data-error-for="reg-confirm"></p>
+</div>
+
+<div class="auth-field auth-span-2">
+<label class="auth-check" for="reg-terms"><input id="reg-terms" name="terms" type="checkbox"/><span>I agree to the AwareX Terms of Service and Privacy Policy.</span></label>
+<p class="auth-error" data-error-for="reg-terms"></p>
+</div>
+
+<div class="auth-span-2">
+<button class="auth-btn auth-btn-primary" id="registerSubmit" type="submit">Create AwareX Account</button>
+</div>
+</form>
+
+<p class="auth-foot">Already have an account? <a class="auth-link" href="login.html">Sign In</a></p>
+</div>
+
+<div class="auth-view" id="registerSuccessView" hidden>
+<div class="auth-success-card">
+<div class="auth-success-icon" aria-hidden="true"><span class="material-symbols-outlined">verified</span></div>
+<h2>Welcome to AwareX</h2>
+<p>Your account has been created successfully.</p>
+<p class="auth-form-note">Your AwareX safety workspace is ready.</p>
+<div class="auth-success-actions">
+<a class="auth-btn auth-btn-primary" href="dashboard.html">Continue to AwareX</a>
+<a class="auth-btn auth-btn-secondary" href="login.html">Sign In</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body>
+</html>

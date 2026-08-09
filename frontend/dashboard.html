@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AwareX Command Center - AI Industrial Safety Dashboard</title>
+<meta name="description" content="AwareX AI Industrial Safety Command Center: video analysis, live monitoring, workers, violations and decision intelligence."/>
+<link rel="icon" href="assets/logo/awarex-logo.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="css/style.css" rel="stylesheet"/>
+<link href="css/dashboard.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script defer src="js/dashboard-data.js"></script>
+<script defer src="js/dashboard.js"></script>
+</head>
+<body class="ax-body">
+
+<div class="ax-backdrop" id="axBackdrop"></div>
+
+<div class="ax-shell">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="ax-sidebar" id="axSidebar">
+    <div class="ax-sidebar__brand">
+      <img src="assets/logo/awarex-logo.png" alt="AwareX"/>
+      <div>
+        <div style="font-size:13px;font-weight:800;letter-spacing:-.01em;">Command Center</div>
+        <div class="ax-sidebar__tag">From Detection to Decision Intelligence</div>
+      </div>
+    </div>
+
+    <nav class="ax-nav" id="axNav">
+      <div class="ax-nav__label">Overview</div>
+      <button class="ax-nav__item is-active" data-route="dashboard"><span class="material-symbols-outlined">dashboard</span>Dashboard</button>
+      <button class="ax-nav__item" data-route="video-analysis"><span class="material-symbols-outlined">movie</span>Video Analysis</button>
+      <button class="ax-nav__item" data-route="analytics"><span class="material-symbols-outlined">monitoring</span>Analytics</button>
+
+      <div class="ax-nav__label">Operations</div>
+      <button class="ax-nav__item" data-route="live-monitoring"><span class="material-symbols-outlined">videocam</span>Live Monitoring</button>
+      <button class="ax-nav__item" data-route="workers"><span class="material-symbols-outlined">groups</span>Workers<span class="ax-nav__badge" data-badge="workers">0</span></button>
+      <button class="ax-nav__item" data-route="violations"><span class="material-symbols-outlined">gpp_maybe</span>Safety Violations<span class="ax-nav__badge" data-badge="violations">0</span></button>
+
+      <div class="ax-nav__label">Intelligence</div>
+      <button class="ax-nav__item" data-route="decision-intelligence"><span class="material-symbols-outlined">neurology</span>Decision Intelligence</button>
+      <button class="ax-nav__item" data-route="reports"><span class="material-symbols-outlined">description</span>Reports</button>
+      <button class="ax-nav__item" data-route="settings"><span class="material-symbols-outlined">settings</span>Settings</button>
+    </nav>
+
+    <div class="ax-sidebar__footer">
+      <div class="ax-card" style="padding:12px;box-shadow:none;background:var(--ax-container);border-color:transparent;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="ax-kpi__icon" style="background:#fff;">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+          <div style="min-width:0;">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;" id="axUserName">Safety Manager</div>
+            <div style="font-size:11px;color:var(--ax-muted);overflow:hidden;text-overflow:ellipsis;" id="axUserEmail">demo@awarex.ai</div>
+          </div>
+        </div>
+        <button class="ax-btn ax-btn--ghost ax-btn--sm" style="width:100%;margin-top:10px;" id="axLogout">
+          <span class="material-symbols-outlined" style="font-size:18px;">logout</span>Logout
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="ax-main">
+    <header class="ax-topbar">
+      <button class="ax-btn ax-btn--ghost ax-btn--sm" id="axMenuToggle" style="display:none;" aria-label="Open navigation">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div style="min-width:0;">
+        <div class="ax-topbar__title" id="axPageTitle">Dashboard</div>
+        <div class="ax-topbar__sub" id="axPageSub">AwareX AI Industrial Safety Command Center</div>
+      </div>
+      <div class="ax-topbar__spacer"></div>
+      <span class="ax-chip ax-chip--demo" title="No AI backend connected yet">
+        <span class="material-symbols-outlined" style="font-size:15px;">science</span>DEMO MODE
+      </span>
+      <a class="ax-btn ax-btn--ghost ax-btn--sm" href="index.html" title="Back to website">
+        <span class="material-symbols-outlined" style="font-size:18px;">home</span>
+      </a>
+    </header>
+
+    <main class="ax-content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="ax-section is-active" id="section-dashboard">
+        <div class="ax-hero">
+          <span class="ax-chip" style="background:rgba(255,255,255,.18);color:#fff;">
+            <span class="ax-dot"></span> AwareX Safety Intelligence
+          </span>
+          <h2>Safety Intelligence at a Glance</h2>
+          <p>Monitor workforce safety, analyze industrial video, identify risks, and make faster safety decisions with AwareX.</p>
+          <div class="ax-hero__actions">
+            <button class="ax-btn ax-btn--primary" data-goto="video-analysis">
+              <span class="material-symbols-outlined">upload</span>UPLOAD VIDEO
+            </button>
+            <button class="ax-btn ax-btn--ghost" data-goto="live-monitoring">
+              <span class="material-symbols-outlined">videocam</span>START LIVE CAMERA
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin:24px 0 14px;flex-wrap:wrap;">
+          <h3 style="margin:0;font-size:16px;font-weight:800;">Key Safety Indicators</h3>
+          <span class="ax-chip ax-chip--demo">Demo data</span>
+          <span style="font-size:12px;color:var(--ax-muted);" id="axKpiUpdated"></span>
+        </div>
+        <div class="ax-grid ax-grid--kpi" id="axKpiGrid"></div>
+
+        <div class="ax-grid ax-grid--sidebarish" style="margin-top:18px;">
+          <div class="ax-card">
+            <h4 class="ax-card__title">Safety Score &amp; PPE Compliance Trend</h4>
+            <p class="ax-card__sub">Last 7 days &middot; demo dataset</p>
+            <div class="ax-chart-box"><canvas id="chartOverviewTrend"></canvas></div>
+          </div>
+          <div class="ax-card">
+            <h4 class="ax-card__title">Risk Distribution</h4>
+            <p class="ax-card__sub">Current workforce risk levels</p>
+            <div class="ax-chart-box"><canvas id="chartOverviewRisk"></canvas></div>
+          </div>
+        </div>
+
+        <div class="ax-grid ax-grid--sidebarish" style="margin-top:18px;">
+          <div class="ax-card">
+            <h4 class="ax-card__title">Recent Safety Violations</h4>
+            <p class="ax-card__sub">Latest detections across all zones</p>
+            <div class="ax-table-wrap">
+              <table class="ax-table">
+                <thead><tr><th>Worker</th><th>Violation</th><th>Location</th><th>Time</th><th>Severity</th><th>Status</th></tr></thead>
+                <tbody id="axRecentViolations"></tbody>
+              </table>
+            </div>
+            <button class="ax-btn ax-btn--soft ax-btn--sm" style="margin-top:14px;" data-goto="violations">View all violations</button>
+          </div>
+          <div class="ax-card">
+            <h4 class="ax-card__title">AI Decision Feed</h4>
+            <p class="ax-card__sub">Demo recommendations awaiting action</p>
+            <div id="axOverviewDI"></div>
+            <button class="ax-btn ax-btn--soft ax-btn--sm" style="margin-top:8px;" data-goto="decision-intelligence">Open Decision Intelligence</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VIDEO ANALYSIS ============ -->
+      <section class="ax-section" id="section-video-analysis">
+        <div class="ax-card" style="margin-bottom:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+          <div style="flex:1;min-width:220px;">
+            <h3 style="margin:0 0 4px;font-size:18px;font-weight:800;">Recorded Video Analysis</h3>
+            <p style="margin:0;font-size:13px;color:var(--ax-muted);">Upload an industrial video file for AI safety analysis. Live cameras are handled separately in Live Monitoring.</p>
+          </div>
+          <span class="ax-chip ax-chip--demo">DEMO MODE - no real AI processing yet</span>
+          <button class="ax-btn ax-btn--ghost ax-btn--sm" id="axNewAnalysis">
+            <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>NEW ANALYSIS
+          </button>
+        </div>
+
+        <div id="axUploadStage">
+          <div class="ax-drop" id="axDropzone">
+            <div class="ax-drop__icon"><span class="material-symbols-outlined" style="font-size:32px;">cloud_upload</span></div>
+            <h3>Drag &amp; drop your video here</h3>
+            <p>Supported formats: MP4, MOV, AVI, WebM &middot; up to 2 GB</p>
+            <button class="ax-btn ax-btn--primary" id="axBrowseBtn"><span class="material-symbols-outlined">folder_open</span>Browse Files</button>
+            <input type="file" id="axFileInput" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,.mp4,.mov,.avi,.webm" hidden/>
+          </div>
+        </div>
+
+        <div id="axFileStage" style="display:none;margin-top:18px;"></div>
+        <div id="axAnalysisProgress" style="display:none;margin-top:18px;"></div>
+        <div id="axResultStage" style="display:none;margin-top:18px;"></div>
+      </section>
+
+      <!-- ============ ANALYTICS ============ -->
+      <section class="ax-section" id="section-analytics">
+        <div class="ax-grid ax-grid--kpi" id="axAnalyticsKpi" style="margin-bottom:18px;"></div>
+        <div class="ax-grid ax-grid--2">
+          <div class="ax-card"><h4 class="ax-card__title">Safety Score Trend</h4><p class="ax-card__sub">Rolling 7-day average</p><div class="ax-chart-box"><canvas id="chartSafetyTrend"></canvas></div></div>
+          <div class="ax-card"><h4 class="ax-card__title">PPE Compliance Trend</h4><p class="ax-card__sub">Helmet, vest, gloves and shoes combined</p><div class="ax-chart-box"><canvas id="chartPpeTrend"></canvas></div></div>
+          <div class="ax-card"><h4 class="ax-card__title">Violations Over Time</h4><p class="ax-card__sub">Detected safety violations per day</p><div class="ax-chart-box"><canvas id="chartViolationsTime"></canvas></div></div>
+          <div class="ax-card"><h4 class="ax-card__title">Risk Distribution</h4><p class="ax-card__sub">Share of workforce by risk level</p><div class="ax-chart-box"><canvas id="chartRiskDonut"></canvas></div></div>
+          <div class="ax-card"><h4 class="ax-card__title">Incident Frequency</h4><p class="ax-card__sub">Critical incidents per day</p><div class="ax-chart-box"><canvas id="chartIncidents"></canvas></div></div>
+          <div class="ax-card"><h4 class="ax-card__title">Frames Processed</h4><p class="ax-card__sub">Vision pipeline throughput</p><div class="ax-chart-box"><canvas id="chartFrames"></canvas></div></div>
+        </div>
+        <div class="ax-grid ax-grid--2" style="margin-top:18px;">
+          <div class="ax-card"><h4 class="ax-card__title">Zone Safety</h4><p class="ax-card__sub">Average safety score per zone</p><div id="axZoneBars"></div></div>
+          <div class="ax-card"><h4 class="ax-card__title">Worker Statistics</h4><p class="ax-card__sub">Workforce breakdown from the current analysis</p><div id="axWorkerStats"></div></div>
+        </div>
+      </section>
+
+      <!-- ============ LIVE MONITORING ============ -->
+      <section class="ax-section" id="section-live-monitoring">
+        <div class="ax-grid ax-grid--sidebarish">
+          <div class="ax-card">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+              <h4 class="ax-card__title" style="margin:0;">Live Camera Feed</h4>
+              <span class="ax-chip ax-chip--muted" id="axLiveBadge"><span class="ax-dot"></span> Camera Off</span>
+              <div style="flex:1"></div>
+              <button class="ax-btn ax-btn--primary ax-btn--sm" id="axStartCam"><span class="material-symbols-outlined" style="font-size:18px;">videocam</span>START LIVE CAMERA</button>
+              <button class="ax-btn ax-btn--danger ax-btn--sm" id="axStopCam" disabled><span class="material-symbols-outlined" style="font-size:18px;">videocam_off</span>STOP CAMERA</button>
+            </div>
+            <div class="ax-media-wrap">
+              <span class="ax-chip ax-chip--live ax-media-badge" id="axLiveDot" style="display:none;"><span class="ax-dot ax-blink"></span> LIVE</span>
+              <video class="ax-media" id="axLiveVideo" playsinline autoplay muted></video>
+            </div>
+            <p style="font-size:12px;color:var(--ax-muted);margin:12px 0 0;">
+              The browser will ask for camera permission. AwareX uses your real laptop webcam stream - no simulated video.
+              Stopping the camera releases every media track so the webcam indicator turns off.
+            </p>
+          </div>
+          <div>
+            <div class="ax-card" style="margin-bottom:18px;">
+              <h4 class="ax-card__title">Camera Status</h4>
+              <p class="ax-card__sub">Live device telemetry</p>
+              <ul class="ax-list" id="axCamStats"></ul>
+            </div>
+            <div class="ax-card">
+              <h4 class="ax-card__title">Camera Sources</h4>
+              <p class="ax-card__sub">More sources connect after backend integration</p>
+              <ul class="ax-list">
+                <li><span class="material-symbols-outlined" style="color:var(--ax-primary);">laptop_windows</span><div><strong>Laptop Webcam</strong><br/><small style="color:var(--ax-muted);">Available now</small></div></li>
+                <li><span class="material-symbols-outlined" style="color:var(--ax-muted);">videocam</span><div><strong>Factory CCTV</strong><br/><small style="color:var(--ax-muted);">Coming Soon</small></div></li>
+                <li><span class="material-symbols-outlined" style="color:var(--ax-muted);">router</span><div><strong>IP Camera / RTSP</strong><br/><small style="color:var(--ax-muted);">Coming Soon</small></div></li>
+                <li><span class="material-symbols-outlined" style="color:var(--ax-muted);">stream</span><div><strong>WebRTC Gateway</strong><br/><small style="color:var(--ax-muted);">Coming Soon</small></div></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="ax-card" style="margin-top:18px;">
+          <h4 class="ax-card__title">Live Detection Panel</h4>
+          <p class="ax-card__sub">Placeholder for real-time YOLO / OpenCV overlays - values shown are DEMO MODE</p>
+          <div class="ax-grid ax-grid--kpi" id="axLiveKpi"></div>
+        </div>
+      </section>
+
+      <!-- ============ WORKERS ============ -->
+      <section class="ax-section" id="section-workers">
+        <div class="ax-grid ax-grid--kpi" id="axWorkerKpi" style="margin-bottom:18px;"></div>
+        <div class="ax-card">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+            <div><h4 class="ax-card__title" style="margin:0;">Workforce Monitoring</h4><p class="ax-card__sub" style="margin:0;">Click any worker for detailed information</p></div>
+            <div style="flex:1"></div>
+            <input class="ax-input" id="axWorkerSearch" placeholder="Search worker ID or zone" style="max-width:280px;"/>
+            <select class="ax-select" id="axWorkerRisk" style="max-width:180px;">
+              <option value="">All risk levels</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+            </select>
+          </div>
+          <div class="ax-table-wrap">
+            <table class="ax-table">
+              <thead><tr><th>Worker ID</th><th>Helmet</th><th>Vest</th><th>Gloves</th><th>Shoes</th><th>Zone</th><th>Movement</th><th>Risk</th><th>Safety Score</th><th>Violations</th></tr></thead>
+              <tbody id="axWorkerTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VIOLATIONS ============ -->
+      <section class="ax-section" id="section-violations">
+        <div class="ax-grid ax-grid--kpi" id="axViolationKpi" style="margin-bottom:18px;"></div>
+        <div class="ax-card" style="margin-bottom:18px;">
+          <h4 class="ax-card__title">Filters</h4>
+          <p class="ax-card__sub">Narrow down violations by date, severity, worker, zone or type</p>
+          <div class="ax-filters">
+            <label class="ax-field" style="margin:0;"><span>Date</span><input type="date" class="ax-input" id="axFilterDate"/></label>
+            <label class="ax-field" style="margin:0;"><span>Severity</span><select class="ax-select" id="axFilterSeverity"><option value="">All</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></label>
+            <label class="ax-field" style="margin:0;"><span>Worker</span><select class="ax-select" id="axFilterWorker"><option value="">All</option></select></label>
+            <label class="ax-field" style="margin:0;"><span>Zone</span><select class="ax-select" id="axFilterZone"><option value="">All</option></select></label>
+            <label class="ax-field" style="margin:0;"><span>Violation Type</span><select class="ax-select" id="axFilterType"><option value="">All</option></select></label>
+          </div>
+        </div>
+        <div class="ax-card">
+          <div class="ax-tabs" id="axViolationTabs">
+            <button class="ax-tab is-active" data-sev="">All</button>
+            <button class="ax-tab" data-sev="Critical">Critical</button>
+            <button class="ax-tab" data-sev="High">High</button>
+            <button class="ax-tab" data-sev="Medium">Medium</button>
+            <button class="ax-tab" data-sev="Low">Low</button>
+          </div>
+          <div class="ax-table-wrap">
+            <table class="ax-table">
+              <thead><tr><th>ID</th><th>Worker ID</th><th>Violation</th><th>Location</th><th>Timestamp</th><th>Severity</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="axViolationTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DECISION INTELLIGENCE ============ -->
+      <section class="ax-section" id="section-decision-intelligence">
+        <div class="ax-card" style="margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <div style="flex:1;min-width:240px;">
+            <h3 style="margin:0 0 4px;font-size:18px;font-weight:800;">Decision Intelligence</h3>
+            <p style="margin:0;font-size:13px;color:var(--ax-muted);">AwareX correlates PPE status, zone context, machine proximity and movement into a single risk decision with recommended actions.</p>
+          </div>
+          <span class="ax-chip ax-chip--demo">DEMO AI RECOMMENDATION</span>
+        </div>
+        <div id="axDIList" class="ax-grid ax-grid--2"></div>
+      </section>
+
+      <!-- ============ REPORTS ============ -->
+      <section class="ax-section" id="section-reports">
+        <div class="ax-card" style="margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <div style="flex:1;min-width:240px;">
+            <h3 style="margin:0 0 4px;font-size:18px;font-weight:800;">Generated Reports</h3>
+            <p style="margin:0;font-size:13px;color:var(--ax-muted);">View, generate, print or download AwareX AI Safety Analysis Reports.</p>
+          </div>
+          <button class="ax-btn ax-btn--primary ax-btn--sm" id="axGenerateReport"><span class="material-symbols-outlined" style="font-size:18px;">note_add</span>Generate Report</button>
+        </div>
+        <div class="ax-card">
+          <div class="ax-table-wrap">
+            <table class="ax-table">
+              <thead><tr><th>Report</th><th>Video</th><th>Date</th><th>Workers</th><th>Violations</th><th>Safety Score</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="axReportTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="ax-section" id="section-settings">
+        <div class="ax-tabs" id="axSettingsTabs">
+          <button class="ax-tab is-active" data-tab="profile">Profile</button>
+          <button class="ax-tab" data-tab="factory">Factory</button>
+          <button class="ax-tab" data-tab="camera">Camera</button>
+          <button class="ax-tab" data-tab="notifications">Notifications</button>
+          <button class="ax-tab" data-tab="ai">AI Configuration</button>
+          <button class="ax-tab" data-tab="appearance">Appearance</button>
+          <button class="ax-tab" data-tab="security">Security</button>
+          <button class="ax-tab" data-tab="system">System Status</button>
+        </div>
+        <div id="axSettingsBody"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="ax-toasts" id="axToasts"></div>
+
+<div class="ax-modal" id="axModal">
+  <div class="ax-modal__backdrop" data-close-modal></div>
+  <div class="ax-modal__panel">
+    <button class="ax-modal__close ax-no-print" data-close-modal aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+    <div id="axModalBody"></div>
+  </div>
+</div>
+
+</body>
+</html>

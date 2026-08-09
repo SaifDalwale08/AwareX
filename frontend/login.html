@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign In - AwareX</title>
+<meta content="Sign in to your AwareX safety workspace." name="description"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="css/auth.css" rel="stylesheet"/>
+<link href="css/responsive.css" rel="stylesheet"/>
+<script defer src="js/auth.js"></script>
+</head>
+<body class="auth-page">
+<main class="auth-layout">
+<section class="auth-brand-panel" aria-label="AwareX brand panel">
+<div class="auth-brand-panel-inner">
+<a class="auth-brand-logo" href="index.html">
+<img alt="AwareX" src="assets/logo/awarex-logo.png"/>
+</a>
+<div class="auth-brand-copy">
+<span class="auth-brand-eyebrow">AwareX</span>
+<h2>Turn workplace vision into intelligent safety decisions.</h2>
+<p>Monitor workforce safety, detect risks in real time, and transform industrial CCTV into actionable safety intelligence.</p>
+</div>
+<ul class="auth-benefits">
+<li class="auth-benefit"><span class="auth-benefit-index">01</span><div><strong>Real-Time Safety Visibility</strong><span>See critical events as they happen across every monitored zone.</span></div></li>
+<li class="auth-benefit"><span class="auth-benefit-index">02</span><div><strong>AI-Powered Risk Intelligence</strong><span>Prioritize hazards with context-aware analytics and scoring.</span></div></li>
+<li class="auth-benefit"><span class="auth-benefit-index">03</span><div><strong>Faster Incident Response</strong><span>Route alerts to the right teams with less delay.</span></div></li>
+</ul>
+<div class="auth-analytics">
+<div class="auth-analytics-card"><span>Live</span><strong>24/7</strong><small>Industrial safety monitoring</small></div>
+<div class="auth-analytics-card"><span>Risk</span><strong>AI</strong><small>Context-driven decision support</small></div>
+<div class="auth-analytics-card"><span>Action</span><strong>Fast</strong><small>Alert routing and escalation</small></div>
+</div>
+</div>
+</section>
+
+<section class="auth-form-panel">
+<div class="auth-form-shell">
+<div class="auth-top-row">
+<a class="auth-back" href="index.html"><span class="material-symbols-outlined" aria-hidden="true" style="font-size:18px">arrow_back</span><span>Back to Home</span></a>
+</div>
+
+<div class="auth-card">
+<div class="auth-card-header">
+<span class="auth-badge">SECURE ENTERPRISE ACCESS</span>
+<a class="auth-brand-logo" href="index.html"><img alt="AwareX" class="auth-card-logo" src="assets/logo/awarex-logo.png"/></a>
+<h1 class="auth-title">Welcome back</h1>
+<p class="auth-subtitle">Sign in to your AwareX safety workspace.</p>
+</div>
+
+<div class="auth-alert auth-alert-error" id="authError" role="alert"></div>
+<div class="auth-alert auth-alert-success" id="authSuccess" role="status" aria-live="polite"></div>
+
+<div class="auth-view" data-auth-form-view="login">
+<form class="auth-form" id="loginForm" novalidate>
+<div class="auth-field">
+<label class="auth-label" for="login-email">Work Email</label>
+<input autocomplete="email" class="auth-input" id="login-email" name="email" placeholder="name@company.com" type="email"/>
+<p class="auth-error" data-error-for="login-email"></p>
+</div>
+
+<div class="auth-field">
+<label class="auth-label" for="login-password">Password</label>
+<div class="auth-input-group auth-password">
+<input autocomplete="current-password" class="auth-input" id="login-password" name="password" placeholder="Enter your password" type="password"/>
+<button aria-label="Show password" aria-pressed="false" class="auth-toggle-pw" data-toggle-password="login-password" type="button"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button>
+</div>
+<p class="auth-error" data-error-for="login-password"></p>
+</div>
+
+<div class="auth-row">
+<label class="auth-check" for="login-remember"><input id="login-remember" name="remember" type="checkbox"/>Remember me</label>
+<a class="auth-link" href="forgot-password.html">Forgot Password?</a>
+</div>
+
+<button class="auth-btn auth-btn-primary" id="loginSubmit" type="submit">Sign In to AwareX</button>
+</form>
+
+<div class="auth-divider"><span>or continue with</span></div>
+<div class="auth-social-grid" aria-label="Enterprise sign-in options">
+<button class="auth-social-button" type="button">Google</button>
+<button class="auth-social-button" type="button">Microsoft</button>
+<button class="auth-social-button" type="button">Apple</button>
+<button class="auth-social-button" type="button">Enterprise SSO</button>
+</div>
+
+<p class="auth-foot">Don't have an account? <a class="auth-link" href="register.html">Create Account</a></p>
+</div>
+
+<div class="auth-view" id="loginSuccessView" hidden>
+<div class="auth-success-card">
+<div class="auth-success-icon" aria-hidden="true"><span class="material-symbols-outlined">verified</span></div>
+<h2>Sign in successful.</h2>
+<p>Your demo session is ready in AwareX.</p>
+<p class="auth-form-note">Continue into the existing AwareX experience or return to the home page.</p>
+<a class="auth-btn auth-btn-primary" href="index.html">Continue to AwareX</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body>
+</html>
