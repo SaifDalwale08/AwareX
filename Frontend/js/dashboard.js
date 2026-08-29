@@ -16,10 +16,14 @@
   var camera = {
     stream: null,
     timer: null,
+    frameTimer: null,       // interval that captures + sends frames to /api/analyze-frame
     startedAt: null,
     alertBaseline: [],
     confirmedAlert: null,
-    countdown: null
+    countdown: null,
+    lastFrameResult: null,  // most recent /api/analyze-frame response
+    framesSent: 0,
+    framesError: 0
   };
   var currentRoute = "dashboard";
 
@@ -719,18 +723,72 @@
       setPipelineStage(name, backendReady && streaming ? "pending" : "pending", backendReady && streaming ? "Awaiting frame analyzer" : "Backend required");
     });
     $("#axDetectionBackendStatus").className = "ax-chip " + (backendReady ? "ax-chip--ok" : "ax-chip--muted");
-    $("#axDetectionBackendStatus").textContent = backendReady ? "Backend connected · live frames not configured" : "AI detection awaiting backend";
+    var liveActive = backendReady && !!camera.stream && !!camera.frameTimer;
+    $("#axDetectionBackendStatus").textContent = liveActive
+      ? "Live AI detection active"
+      : backendReady
+        ? "Backend connected — start camera to activate"
+        : "AI detection awaiting backend";
   }
 
   function renderLiveMetrics() {
+    var result = camera.lastFrameResult;
     var activeAlert = camera.confirmedAlert;
-    $("#axLiveWorkers").textContent = activeAlert ? (activeAlert.workerId || "—") : "—";
-    $("#axLivePpe").textContent = activeAlert ? "Manual verification" : "Awaiting AI";
-    $("#axLiveViolations").textContent = activeAlert ? "1 confirmed" : "—";
-    $("#axLiveDetection").textContent = camera.stream ? "Camera only" : "Not connected";
-    $("#axLiveDetectionNote").innerHTML = camera.stream
-      ? '<span class="material-symbols-outlined">info</span><span>Camera is streaming locally. Live-frame analysis is not exposed by the existing backend, so worker, PPE, and violation values remain unavailable.</span>'
-      : '<span class="material-symbols-outlined">info</span><span>Start the camera to request browser access. Detection values will not be fabricated when the AI backend is unavailable.</span>';
+
+    if (result) {
+      // Real backend data from /api/analyze-frame
+      var workers = result.workers || 0;
+      var wd = result.workers_detail || [];
+      var score = result.safety_score !== undefined ? result.safety_score : "—";
+      var severity = result.severity || "—";
+      var totalDet = result.total_detections || 0;
+      var openCritical = (result.open_critical_events || []).length;
+
+      $("#axLiveWorkers").textContent = workers;
+      $("#axLivePpe").textContent = totalDet > 0 ? totalDet + " PPE detections" : "No PPE detected";
+      $("#axLiveViolations").textContent = openCritical > 0 ? openCritical + " critical open" : "0";
+      $("#axLiveDetection").textContent = "Score: " + score + "% | " + severity;
+      $("#axLiveDetectionNote").innerHTML =
+        '<span class="material-symbols-outlined">check_circle</span>' +
+        '<span>Live AI analysis active — ' + camera.framesSent + ' frames analyzed. ' +
+        (wd.length > 0 ? "Workers: " + wd.map(function(w){ return w.id; }).join(", ") + "." : "") +
+        '</span>';
+    } else if (camera.stream) {
+      $("#axLiveWorkers").textContent = "—";
+      $("#axLivePpe").textContent = "Initializing…";
+      $("#axLiveViolations").textContent = "—";
+      $("#axLiveDetection").textContent = "Waiting for first frame";
+      $("#axLiveDetectionNote").innerHTML =
+        '<span class="material-symbols-outlined">info</span>' +
+        '<span>Camera streaming. Sending frames to AI backend every 1 second…</span>';
+    } else {
+      $("#axLiveWorkers").textContent = "—";
+      $("#axLivePpe").textContent = "Awaiting AI";
+      $("#axLiveViolations").textContent = "—";
+      $("#axLiveDetection").textContent = "Not connected";
+      $("#axLiveDetectionNote").innerHTML =
+        '<span class="material-symbols-outlined">info</span>' +
+        '<span>Start the camera to activate live AI detection. Results will not be fabricated.</span>';
+    }
+
+    // Check for new critical events from backend result
+    if (result && result.new_critical_events && result.new_critical_events.length > 0) {
+      var newEvt = result.new_critical_events[0];
+      var alertObj = {
+        id: newEvt.event_id,
+        workerId: newEvt.worker_id,
+        type: newEvt.violation,
+        location: newEvt.zone,
+        date: new Date().toISOString().slice(0, 10),
+        time: new Date().toTimeString().slice(0, 5),
+        severity: "Critical",
+        status: "Active"
+      };
+      if (!camera.confirmedAlert || camera.confirmedAlert.id !== alertObj.id) {
+        camera.confirmedAlert = alertObj;
+        startAlertCountdown(alertObj);
+      }
+    }
   }
 
   function stopAlertCountdown() {
@@ -809,6 +867,10 @@
       camera.alertBaseline = (data().alerts || []).map(function (alert) { return alert.id; });
       camera.startedAt = Date.now();
       camera.stream = stream;
+      camera.lastFrameResult = null;
+      camera.framesSent = 0;
+      camera.framesError = 0;
+
       var video = $("#axLiveVideo");
       video.srcObject = stream;
       video.play().catch(function () {});
@@ -821,6 +883,8 @@
       var t0 = Date.now();
       var track = stream.getVideoTracks()[0];
       var settings = track.getSettings ? track.getSettings() : {};
+
+      // ── Status-bar timer (1 s) ──
       camera.timer = setInterval(function () {
         liveStats({
           source: track.label || "Laptop Webcam",
@@ -833,9 +897,54 @@
         renderLiveMetrics();
         checkForNewBackendAlert();
       }, 1000);
+
+      // ── Frame-capture + AI timer (1 s) ──
+      // Uses a hidden canvas to grab a JPEG and POST to /api/analyze-frame
+      var _canvas = document.createElement("canvas");
+      var _apiBase = window.AwareXData.api.baseUrl || "http://127.0.0.1:8003";
+      var _busy = false;   // prevents concurrent overlapping requests
+
+      camera.frameTimer = setInterval(function () {
+        if (_busy || !camera.stream) return;
+        if (!video.videoWidth || !video.videoHeight) return;
+
+        _canvas.width  = video.videoWidth;
+        _canvas.height = video.videoHeight;
+        var ctx = _canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, _canvas.width, _canvas.height);
+
+        _canvas.toBlob(function (blob) {
+          if (!blob) return;
+          _busy = true;
+          camera.framesSent++;
+
+          var fd = new FormData();
+          fd.append("frame", blob, "webcam_frame.jpg");
+          fd.append("camera", "Laptop-Camera");
+          fd.append("zone", "Zone-A");
+
+          fetch(_apiBase + "/api/analyze-frame", {
+            method: "POST",
+            body: fd
+          })
+            .then(function (resp) {
+              if (!resp.ok) throw new Error("HTTP " + resp.status);
+              return resp.json();
+            })
+            .then(function (result) {
+              camera.lastFrameResult = result;
+              _busy = false;
+            })
+            .catch(function () {
+              camera.framesError++;
+              _busy = false;
+            });
+        }, "image/jpeg", 0.75);
+      }, 1000);   // 1 frame per second — practical for CPU-based backend
+
       renderLivePipeline();
       renderLiveMetrics();
-      toast("Laptop camera started.", "success");
+      toast("Live camera started. AI analysis running at 1 fps.", "success");
     }).catch(function (err) {
       toast("Camera permission denied or unavailable: " + err.name, "error");
     });
@@ -847,7 +956,11 @@
       camera.stream = null;
     }
     if (camera.timer) { clearInterval(camera.timer); camera.timer = null; }
+    if (camera.frameTimer) { clearInterval(camera.frameTimer); camera.frameTimer = null; }
     camera.startedAt = null;
+    camera.lastFrameResult = null;
+    camera.framesSent = 0;
+    camera.framesError = 0;
     var video = $("#axLiveVideo");
     video.pause();
     video.srcObject = null;
@@ -963,15 +1076,34 @@
       var liveResponse = t.closest("[data-live-alert-response]");
       if (liveResponse && camera.confirmedAlert) {
         var response = liveResponse.getAttribute("data-live-alert-response");
+        var alertId = camera.confirmedAlert.id;
         stopAlertCountdown();
         if (!camera.countdown) {
-          camera.countdown = { alertId: camera.confirmedAlert.id, seconds: 0, status: response === "acknowledge" ? "Acknowledged" : "False detection", timer: null };
+          camera.countdown = { alertId: alertId, seconds: 0, status: response === "acknowledge" ? "Acknowledged" : "False detection", timer: null };
         } else {
           camera.countdown.status = response === "acknowledge" ? "Acknowledged" : "False detection";
           camera.countdown.seconds = 0;
         }
         renderLiveAlert();
         toast(response === "acknowledge" ? "Critical alert acknowledged by manager." : "Alert marked as a false detection.", "success");
+
+        // POST to backend to record acknowledgement and stop escalation
+        if (response === "acknowledge" && alertId) {
+          var _apiBase = window.AwareXData.api.baseUrl || "http://127.0.0.1:8003";
+          fetch(_apiBase + "/api/events/" + encodeURIComponent(alertId) + "/acknowledge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          }).then(function (r) {
+            if (r.ok) return r.json();
+            throw new Error("HTTP " + r.status);
+          }).then(function (body) {
+            if (body && body.success) {
+              toast("Escalation cancelled — event acknowledged in backend.", "success");
+            }
+          }).catch(function (err) {
+            toast("Backend ack failed: " + err.message + " (local acknowledgement still recorded).", "error");
+          });
+        }
         return;
       }
 

@@ -1,175 +1,138 @@
-from AI.safety_engine import analyze_safety
+"""
+AwareX PPE Inference
+=====================
+Runs the AwareX custom PPE YOLO model on a single image.
+
+Device selection:
+  - Uses GPU (device=0) when CUDA is available.
+  - Falls back to CPU automatically.
+
+Model path:
+  - Reads PPE_MODEL_PATH env var first.
+  - Falls back to the default trained weights path.
+"""
+
+import os
+import logging
+import torch
+
 from ultralytics import YOLO
-from pathlib import Path
-import json
 
+logger = logging.getLogger("awarex.inference")
 
-# ==============================
-# AwareX AI Configuration
-# ==============================
+# ── Device ───────────────────────────────────────────────────
+_DEVICE: int | str = 0 if torch.cuda.is_available() else "cpu"
 
-MODEL_PATH = r"D:\AwareX\runs\awarex_ppe_v1\weights\best.pt"
+# ── Model path ───────────────────────────────────────────────
+_DEFAULT_MODEL_PATH = r"D:\AwareX\runs\awarex_ppe_v1\weights\best.pt"
+MODEL_PATH = os.getenv("PPE_MODEL_PATH", _DEFAULT_MODEL_PATH)
+
+# ── Load model once at import time ───────────────────────────
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(
+        f"AwareX PPE model not found at: {MODEL_PATH}\n"
+        f"Set the PPE_MODEL_PATH environment variable to the correct path."
+    )
 
 model = YOLO(MODEL_PATH)
 
+logger.info(
+    "[PPE inference] model=%s  device=%s  classes=%s",
+    MODEL_PATH, _DEVICE, list(model.names.values()),
+)
 
-def analyze_image(image_path):
-    """
-    Run AwareX PPE detection on a single image.
-    """
 
+# ── Public API ────────────────────────────────────────────────
+
+def analyze_image(image_path: str) -> list:
+    """
+    Run AwareX PPE detection on a single image file.
+
+    Parameters
+    ----------
+    image_path : str
+        Path to a JPEG/PNG image.
+
+    Returns
+    -------
+    list of dicts:
+        { "class": str, "confidence": float, "bbox": [x1,y1,x2,y2] }
+    """
     results = model.predict(
         source=image_path,
         conf=0.35,
-        device="cpu",
-        verbose=False
+        device=_DEVICE,
+        verbose=False,
     )
 
     detections = []
 
     for result in results:
-
         boxes = result.boxes
-
         if boxes is None:
             continue
 
         for box in boxes:
-
-            class_id = int(box.cls[0])
+            class_id   = int(box.cls[0])
             confidence = float(box.conf[0])
-
             class_name = model.names[class_id]
-
             x1, y1, x2, y2 = box.xyxy[0].tolist()
 
             detections.append({
-                "class": class_name,
+                "class":      class_name,
                 "confidence": round(confidence, 3),
-                "bbox": [
-                    round(x1),
-                    round(y1),
-                    round(x2),
-                    round(y2)
-                ]
+                "bbox":       [round(x1), round(y1), round(x2), round(y2)],
             })
 
     return detections
 
 
-def generate_summary(detections):
-
-    summary = {}
-
-    for detection in detections:
-
-        class_name = detection["class"]
-
-        if class_name not in summary:
-            summary[class_name] = 0
-
-        summary[class_name] += 1
-
+def generate_summary(detections: list) -> dict:
+    """Count detections by class name."""
+    summary: dict = {}
+    for d in detections:
+        cls = d["class"]
+        summary[cls] = summary.get(cls, 0) + 1
     return summary
 
 
+def get_device() -> str:
+    """Return the device string currently used for inference."""
+    return str(_DEVICE)
+
+
+# ── Standalone test ──────────────────────────────────────────
 if __name__ == "__main__":
+    from pathlib import Path
+    from AI.safety_engine import analyze_safety
 
-    print("===================================")
-    print("        AwareX AI ENGINE")
-    print("===================================")
+    print("=" * 50)
+    print("AwareX PPE Inference — standalone test")
+    print("=" * 50)
+    print(f"Model: {MODEL_PATH}")
+    print(f"Device: {_DEVICE}")
+    print(f"Classes: {list(model.names.values())}")
 
-    print("\nModel:", MODEL_PATH)
+    # Find a test image
+    test_dirs = [
+        Path(r"D:\AwareX\Dataset\test\images"),
+        Path(r"D:\AwareX\dataset\test\images"),
+    ]
+    image = None
+    for d in test_dirs:
+        imgs = list(d.glob("*.jpg")) if d.exists() else []
+        if imgs:
+            image = imgs[0]
+            break
 
-    print("\nAvailable Classes:")
-
-    for class_id, name in model.names.items():
-        print(f"{class_id}: {name}")
-
-    print("\nAI Engine loaded successfully.")
-
-    # ==========================================
-    # Find a real test image automatically
-    # ==========================================
-
-    test_folder = Path(r"D:\AwareX\dataset\test\images")
-
-    image_files = list(test_folder.glob("*.jpg"))
-
-    if not image_files:
-        image_files = list(test_folder.glob("*.png"))
-
-    if not image_files:
-        print("\nERROR: No test images found.")
-        exit()
-
-    test_image = str(image_files[0])
-
-    print("\nTest image:")
-    print(test_image)
-
-    # ==========================================
-    # Run YOLO detection
-    # ==========================================
-
-    print("\nRunning AI detection...")
-
-    detections = analyze_image(test_image)
-
-    # ==========================================
-    # Display detections
-    # ==========================================
-
-    print("\nDetections:")
-
-    if not detections:
-        print("  No PPE detected.")
-
+    if image is None:
+        print("No test images found.")
     else:
+        print(f"Test image: {image}")
+        detections = analyze_image(str(image))
+        print(f"Detections: {len(detections)}")
+        for det in detections:
+            print(f"  {det['class']}  conf={det['confidence']}")
 
-        for detection in detections:
-
-            print(
-                f"  {detection['class']} "
-                f"({detection['confidence']})"
-            )
-
-    # ==========================================
-    # AwareX Safety Intelligence
-    # ==========================================
-
-    safety_result = analyze_safety(detections)
-
-    print("\n===================================")
-    print("     AWAREX SAFETY INTELLIGENCE")
-    print("===================================")
-
-    print(
-        f"\nSafety Score: "
-        f"{safety_result['safety_score']}%"
-    )
-
-    print(
-        f"Total Detections: "
-        f"{safety_result['total_detections']}"
-    )
-
-    print(
-        f"PPE Violations: "
-        f"{safety_result['violation_count']}"
-    )
-
-    print(
-        f"Critical Violations: "
-        f"{safety_result['critical_violations']}"
-    )
-
-    print(
-        f"Severity: "
-        f"{safety_result['severity']}"
-    )
-
-    print(
-        f"\nRecommendation:\n"
-        f"{safety_result['recommendation']}"
-    )
+        safety = analyze_safety(detections)
+        print(f"Safety score: {safety['safety_score']}%  severity={safety['severity']}")

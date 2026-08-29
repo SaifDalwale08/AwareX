@@ -61,3 +61,5 @@ frontend/server*.log
 .idea/
 .DS_Store
 Thumbs.db
+
+datasets/

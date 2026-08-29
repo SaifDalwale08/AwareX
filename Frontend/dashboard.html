@@ -177,6 +177,79 @@
         <div id="axFileStage" style="display:none;margin-top:18px;"></div>
         <div id="axAnalysisProgress" style="display:none;margin-top:18px;"></div>
         <div id="axResultStage" style="display:none;margin-top:18px;"></div>
+
+        <!-- ==========================================
+             AWAREX LIVE LAPTOP CAMERA
+             ========================================== -->
+
+        <section class="live-camera-section">
+
+            <div class="section-header">
+                <h2>📷 Live Camera Monitoring</h2>
+                <p>Monitor workplace safety using your laptop camera.</p>
+            </div>
+
+            <div class="camera-container">
+
+                <video
+                    id="liveCamera"
+                    autoplay
+                    playsinline
+                    muted
+                    style="width: 100%; max-width: 720px; border-radius: 12px; display: none;">
+                </video>
+
+                <div id="cameraStatus">
+                    Camera is not active
+                </div>
+
+                <div class="camera-controls">
+
+                    <button
+                        id="startCameraBtn"
+                        type="button">
+                        📷 Start Live Camera
+                    </button>
+
+                    <button
+                        id="stopCameraBtn"
+                        type="button"
+                        disabled>
+                        ⏹ Stop Camera
+                    </button>
+
+                </div>
+
+                <div id="liveSafetyResult" style="display:none;">
+
+                    <h3>Live Safety Status</h3>
+
+                    <div>
+                        <strong>Workers:</strong>
+                        <span id="liveWorkerCount">0</span>
+                    </div>
+
+                    <div>
+                        <strong>Safety Score:</strong>
+                        <span id="liveSafetyScore">--</span>
+                    </div>
+
+                    <div>
+                        <strong>Severity:</strong>
+                        <span id="liveSeverity">--</span>
+                    </div>
+
+                    <div>
+                        <strong>Violations:</strong>
+                        <span id="liveViolations">0</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
       </section>
 
       <!-- ============ ANALYTICS ============ -->

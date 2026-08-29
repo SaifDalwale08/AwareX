@@ -165,6 +165,74 @@ def _send_webhook(message: str, violation_data: dict) -> dict:
 
 
 # ─────────────────────────────────────────────
+# Provider: TextBee SMS
+# https://textbee.dev  — simple REST API, no SDK required
+# ─────────────────────────────────────────────
+
+def _send_textbee_sms(message: str) -> dict:
+    """
+    Send SMS via TextBee REST API.
+    Requires:
+        TEXTBEE_API_KEY        — API key from textbee.dev dashboard
+        TEXTBEE_MANAGER_PHONE  — recipient number in E.164 format (+91XXXXXXXXXX)
+    """
+    api_key = os.getenv("TEXTBEE_API_KEY", "").strip()
+    to_phone = os.getenv("TEXTBEE_MANAGER_PHONE", "").strip()
+
+    if not api_key or not to_phone:
+        return {
+            "provider": "textbee",
+            "status":   "skipped",
+            "reason":   "TEXTBEE_API_KEY or TEXTBEE_MANAGER_PHONE not set",
+        }
+
+    try:
+        import urllib.request
+        import urllib.error
+
+        payload = json.dumps({
+            "receivers": [to_phone],
+            "message":   message,
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            "https://api.textbee.dev/api/v1/gateway/devices/send-sms",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key":    api_key,
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = resp.read().decode("utf-8")
+            return {
+                "provider":    "textbee",
+                "status":      "sent",
+                "http_status": resp.status,
+                "to":          to_phone,
+                "response":    body[:200],
+            }
+    except urllib.error.HTTPError as exc:
+        body = ""
+        try:
+            body = exc.read().decode("utf-8")[:300]
+        except Exception:
+            pass
+        return {
+            "provider": "textbee",
+            "status":   "error",
+            "error":    f"HTTP {exc.code}: {body}",
+        }
+    except Exception as exc:
+        return {
+            "provider": "textbee",
+            "status":   "error",
+            "error":    str(exc),
+        }
+
+
+# ─────────────────────────────────────────────
 # Mock mode (always runs when no providers fire)
 # ─────────────────────────────────────────────
 
@@ -213,7 +281,13 @@ def send_critical_alert(
     results = []
     any_sent = False
 
-    # Try every provider
+    # TextBee SMS (primary for this deployment)
+    tb_result = _send_textbee_sms(message)
+    results.append(tb_result)
+    if tb_result.get("status") == "sent":
+        any_sent = True
+
+    # Try every additional provider
     sms_result = _send_twilio_sms(message)
     results.append(sms_result)
     if sms_result.get("status") == "sent":
