@@ -10,6 +10,7 @@
 <link href="css/style.css" rel="stylesheet"/>
 <link href="css/dashboard.css" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script defer src="js/ppe-intelligence.js"></script>
 <script defer src="js/dashboard-data.js"></script>
 <script defer src="js/dashboard.js"></script>
 </head>
@@ -38,10 +39,14 @@
       <button class="ax-nav__item" data-route="live-monitoring"><span class="material-symbols-outlined">videocam</span>Live Monitoring</button>
       <button class="ax-nav__item" data-route="workers"><span class="material-symbols-outlined">groups</span>Workers<span class="ax-nav__badge" data-badge="workers">0</span></button>
       <button class="ax-nav__item" data-route="violations"><span class="material-symbols-outlined">gpp_maybe</span>Safety Violations<span class="ax-nav__badge" data-badge="violations">0</span></button>
+      <button class="ax-nav__item" data-route="emergency"><span class="material-symbols-outlined">emergency</span>Emergency Workflow<span class="ax-nav__badge ax-nav__badge--alert" data-badge="emergencies" style="background:#ffe0de;color:#93000a;">0</span></button>
 
       <div class="ax-nav__label">Intelligence</div>
+      <button class="ax-nav__item" data-route="ppe-intelligence"><span class="material-symbols-outlined">health_and_safety</span>PPE Intelligence</button>
       <button class="ax-nav__item" data-route="decision-intelligence"><span class="material-symbols-outlined">neurology</span>Decision Intelligence</button>
+      <button class="ax-nav__item" data-route="impact"><span class="material-symbols-outlined">bar_chart</span>Impact &amp; Analytics</button>
       <button class="ax-nav__item" data-route="reports"><span class="material-symbols-outlined">description</span>Reports</button>
+      <button class="ax-nav__item" data-route="camera-config"><span class="material-symbols-outlined">settings_input_hdmi</span>Camera Config</button>
       <button class="ax-nav__item" data-route="settings"><span class="material-symbols-outlined">settings</span>Settings</button>
     </nav>
 
@@ -208,7 +213,7 @@
             </div>
             <p style="font-size:12px;color:var(--ax-muted);margin:12px 0 0;">
               The browser will ask for camera permission. AwareX uses your real laptop webcam stream - no simulated video.
-              Stopping the camera releases every media track so the webcam indicator turns off.
+              Camera access is separate from AI analysis; detection values remain unavailable until a connected backend reports them.
             </p>
           </div>
           <div>
@@ -230,9 +235,60 @@
           </div>
         </div>
         <div class="ax-card" style="margin-top:18px;">
-          <h4 class="ax-card__title">Live Detection Panel</h4>
-          <p class="ax-card__sub">Placeholder for real-time YOLO / OpenCV overlays - values shown are DEMO MODE</p>
-          <div class="ax-grid ax-grid--kpi" id="axLiveKpi"></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <h4 class="ax-card__title">Live Safety Pipeline</h4>
+              <p class="ax-card__sub">Detection and decision states are shown only when reported by the backend.</p>
+            </div>
+            <span class="ax-chip ax-chip--muted" id="axDetectionBackendStatus">AI detection awaiting backend</span>
+          </div>
+          <div class="ax-live-pipeline" aria-label="Live safety pipeline">
+            <div class="ax-live-pipeline__stage is-ready" data-pipeline-stage="camera">
+              <span class="material-symbols-outlined">videocam</span>
+              <div><strong>Laptop Webcam</strong><small data-pipeline-status>Ready</small></div>
+            </div>
+            <span class="ax-live-pipeline__arrow">→</span>
+            <div class="ax-live-pipeline__stage" data-pipeline-stage="feed">
+              <span class="material-symbols-outlined">live_tv</span>
+              <div><strong>Live Camera Feed</strong><small data-pipeline-status>Waiting</small></div>
+            </div>
+            <span class="ax-live-pipeline__arrow">→</span>
+            <div class="ax-live-pipeline__stage" data-pipeline-stage="detection">
+              <span class="material-symbols-outlined">person_search</span>
+              <div><strong>Worker Detection</strong><small data-pipeline-status>Backend required</small></div>
+            </div>
+            <span class="ax-live-pipeline__arrow">→</span>
+            <div class="ax-live-pipeline__stage" data-pipeline-stage="tracking">
+              <span class="material-symbols-outlined">track_changes</span>
+              <div><strong>Worker Tracking</strong><small data-pipeline-status>Backend required</small></div>
+            </div>
+            <span class="ax-live-pipeline__arrow">→</span>
+            <div class="ax-live-pipeline__stage" data-pipeline-stage="ppe">
+              <span class="material-symbols-outlined">health_and_safety</span>
+              <div><strong>PPE Detection</strong><small data-pipeline-status>Backend required</small></div>
+            </div>
+            <span class="ax-live-pipeline__arrow">→</span>
+            <div class="ax-live-pipeline__stage" data-pipeline-stage="decision">
+              <span class="material-symbols-outlined">gavel</span>
+              <div><strong>Safety Decision</strong><small data-pipeline-status>Backend required</small></div>
+            </div>
+          </div>
+          <div class="ax-grid ax-grid--kpi ax-live-metrics" id="axLiveKpi">
+            <div class="ax-card ax-live-metric"><span class="material-symbols-outlined">groups</span><div><small>Workers Detected</small><strong id="axLiveWorkers">—</strong></div></div>
+            <div class="ax-card ax-live-metric"><span class="material-symbols-outlined">health_and_safety</span><div><small>PPE Status</small><strong id="axLivePpe">Awaiting AI</strong></div></div>
+            <div class="ax-card ax-live-metric"><span class="material-symbols-outlined">gpp_maybe</span><div><small>Active Violations</small><strong id="axLiveViolations">—</strong></div></div>
+            <div class="ax-card ax-live-metric"><span class="material-symbols-outlined">speed</span><div><small>Detection Status</small><strong id="axLiveDetection">Not connected</strong></div></div>
+          </div>
+          <div class="ax-live-note" id="axLiveDetectionNote">
+            <span class="material-symbols-outlined">info</span>
+            <span>Live camera is available. No live-frame detection endpoint is present in this project, so AwareX will not invent worker or PPE results.</span>
+          </div>
+        </div>
+        <div class="ax-card ax-critical-alert" id="axCriticalAlert" style="margin-top:18px;">
+          <div class="ax-empty" style="padding:24px 16px;">
+            <span class="material-symbols-outlined">verified_user</span>
+            <p>No confirmed critical violation is waiting for manager response.</p>
+          </div>
         </div>
       </section>
 
@@ -332,6 +388,26 @@
           <button class="ax-tab" data-tab="system">System Status</button>
         </div>
         <div id="axSettingsBody"></div>
+      </section>
+
+      <!-- ============ PPE INTELLIGENCE (Phase 2) ============ -->
+      <section class="ax-section" id="section-ppe-intelligence">
+        <div id="axPpeIntelBody"></div>
+      </section>
+
+      <!-- ============ IMPACT & ANALYTICS (Phase 3) ============ -->
+      <section class="ax-section" id="section-impact">
+        <div id="axImpactBody"></div>
+      </section>
+
+      <!-- ============ EMERGENCY WORKFLOW (Phase 4) ============ -->
+      <section class="ax-section" id="section-emergency">
+        <div id="axEmergencyBody"></div>
+      </section>
+
+      <!-- ============ CAMERA DEPLOYMENT CONFIG (Phase 5) ============ -->
+      <section class="ax-section" id="section-camera-config">
+        <div id="axCameraConfigBody"></div>
       </section>
 
     </main>

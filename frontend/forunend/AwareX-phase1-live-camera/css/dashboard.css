@@ -251,6 +251,62 @@
 .ax-media-wrap { position: relative; }
 .ax-media-badge { position: absolute; top: 12px; left: 12px; z-index: 2; }
 
+/* ---------- Live safety pipeline ---------- */
+.ax-live-pipeline {
+  display: flex; align-items: stretch; gap: 8px; margin: 18px 0;
+  overflow-x: auto; padding-bottom: 4px;
+}
+.ax-live-pipeline__stage {
+  min-width: 142px; flex: 1; display: flex; align-items: center; gap: 9px;
+  padding: 12px; border: 1px solid var(--ax-border); border-radius: 12px;
+  background: #fbfcfe; color: var(--ax-muted);
+}
+.ax-live-pipeline__stage > .material-symbols-outlined { color: var(--ax-muted); font-size: 21px; }
+.ax-live-pipeline__stage strong { display: block; color: #19212b; font-size: 11.5px; white-space: nowrap; }
+.ax-live-pipeline__stage small { display: block; margin-top: 3px; font-size: 10.5px; white-space: nowrap; }
+.ax-live-pipeline__stage.is-ready { border-color: rgba(0,74,198,.25); }
+.ax-live-pipeline__stage.is-ready > .material-symbols-outlined,
+.ax-live-pipeline__stage.is-active > .material-symbols-outlined { color: var(--ax-primary); }
+.ax-live-pipeline__stage.is-active { border-color: rgba(0,74,198,.42); background: var(--ax-container); }
+.ax-live-pipeline__stage.is-active small { color: var(--ax-primary); font-weight: 700; }
+.ax-live-pipeline__stage.is-confirmed { border-color: rgba(22,114,74,.38); background: #effaf2; }
+.ax-live-pipeline__stage.is-confirmed > .material-symbols-outlined { color: #16724a; }
+.ax-live-pipeline__arrow { align-self: center; color: var(--ax-muted); font-size: 18px; }
+.ax-live-metrics { margin-top: 4px; }
+.ax-live-metric {
+  display: flex; align-items: center; gap: 12px; padding: 16px;
+  box-shadow: none; border-color: var(--ax-border);
+}
+.ax-live-metric > .material-symbols-outlined {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 11px; background: var(--ax-container); color: var(--ax-primary);
+}
+.ax-live-metric small { display: block; color: var(--ax-muted); font-size: 11.5px; font-weight: 600; }
+.ax-live-metric strong { display: block; margin-top: 5px; font-size: 17px; }
+.ax-live-note {
+  display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 11px 12px;
+  border-radius: 10px; background: #f8fafc; color: var(--ax-muted); font-size: 12px; line-height: 1.5;
+}
+.ax-live-note .material-symbols-outlined { color: var(--ax-primary); font-size: 18px; flex: 0 0 auto; }
+.ax-critical-alert { border-color: rgba(186,26,26,.26); background: linear-gradient(135deg, #fff, #fff8f7); }
+.ax-critical-alert__head { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
+.ax-critical-alert__head .ax-card__title { margin-top: 10px; }
+.ax-countdown {
+  min-width: 94px; padding: 10px 12px; border-radius: 12px; text-align: center;
+  background: #f1f3f6; color: var(--ax-muted);
+}
+.ax-countdown.is-waiting { background: #ffe7e4; color: #93000a; }
+.ax-countdown strong { display: block; font-size: 24px; letter-spacing: -.02em; }
+.ax-countdown small { display: block; margin-top: 2px; font-size: 10px; font-weight: 700; }
+.ax-critical-alert__details {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(186,26,26,.14);
+}
+.ax-critical-alert__details small { display: block; color: var(--ax-muted); font-size: 11px; }
+.ax-critical-alert__details strong { display: block; margin-top: 4px; font-size: 13px; }
+.ax-critical-alert__details .ax-chip { margin-top: 4px; }
+.ax-critical-alert__actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+
 /* ---------- Misc ---------- */
 .ax-list { list-style: none; margin: 0; padding: 0; }
 .ax-list li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(70,86,108,.1); font-size: 13.5px; }
@@ -341,6 +397,7 @@
   .ax-card { padding: 18px; }
   .ax-chart-box { height: 240px; }
   .ax-filters { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .ax-critical-alert__details { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 480px) {
   .ax-grid--kpi { grid-template-columns: 1fr; }
@@ -351,10 +408,103 @@
   .ax-topbar__sub { display: none; }
   .ax-media { min-height: 220px; }
   .ax-chart-box { height: 220px; }
+  .ax-live-pipeline { margin-right: -2px; }
+  .ax-live-pipeline__stage { min-width: 132px; }
+  .ax-live-pipeline__arrow { display: none; }
+  .ax-critical-alert__head { flex-direction: column; }
+  .ax-critical-alert__details { grid-template-columns: 1fr; }
 }
 @media print {
   .ax-sidebar, .ax-topbar, .ax-modal__close, .ax-no-print { display: none !important; }
   .ax-main { margin-left: 0; }
   .ax-modal__panel { box-shadow: none; margin: 0; width: 100%; max-height: none; }
   .ax-modal__backdrop { display: none; }
+}
+
+/* ==========================================================
+   AwareX - Phase 2–5 Additions
+   PPE Intelligence, Impact & Analytics, Emergency Workflow,
+   Camera Deployment Configuration
+   ========================================================== */
+
+/* ---------- PPE Intelligence ---------- */
+.ax-ppe-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Camera Source Selector ---------- */
+.ax-camera-source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.ax-camera-source-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 12px;
+  border-radius: 14px;
+  border: 2px solid var(--ax-border);
+  background: var(--ax-surface);
+  color: var(--ax-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .2s ease, background .2s ease, color .2s ease, transform .15s ease;
+  line-height: 1.4;
+}
+
+.ax-camera-source-btn:hover {
+  border-color: var(--ax-primary-2);
+  background: var(--ax-container);
+  color: var(--ax-primary);
+  transform: translateY(-2px);
+}
+
+.ax-camera-source-btn.is-selected {
+  border-color: var(--ax-primary);
+  background: linear-gradient(135deg, var(--ax-container), var(--ax-container-2));
+  color: var(--ax-primary);
+  box-shadow: 0 6px 18px rgba(0, 74, 198, .16);
+}
+
+.ax-camera-source-btn .material-symbols-outlined {
+  font-size: 28px;
+}
+
+/* ---------- Emergency Workflow ---------- */
+.ax-emergency-status--pending {
+  border-color: rgba(186, 26, 26, .35) !important;
+  background: linear-gradient(135deg, #fff, #fff8f7) !important;
+}
+
+/* ---------- Responsive additions ---------- */
+@media (max-width: 1280px) {
+  .ax-ppe-flow {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ax-camera-source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ax-ppe-flow {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .ax-camera-source-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
