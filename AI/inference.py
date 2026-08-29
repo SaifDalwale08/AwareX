@@ -21,7 +21,7 @@ def analyze_image(image_path):
     results = model.predict(
         source=image_path,
         conf=0.35,
-        device=0,
+        device="cpu",
         verbose=False
     )
 

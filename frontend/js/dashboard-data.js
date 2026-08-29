@@ -24,7 +24,7 @@ Backend:
 
   var MODE = "LIVE";
 
-  var API_BASE_URL = "http://127.0.0.1:8002";
+  var API_BASE_URL = "http://127.0.0.1:8003";
 
   var ZONES = [
     "Assembly Line A",
@@ -1375,6 +1375,64 @@ Backend:
       zoneSafety: zones
     };
 
+    // ── Build real worker objects from backend workers_detail ──
+    // backend returns: workers (int) + workers_detail (array of tracked worker objects)
+    var workerCount = Number(data.workers) || 0;
+    var workerDetail = Array.isArray(data.workers_detail) ? data.workers_detail : [];
+
+    var workers = [];
+    if (workerDetail.length > 0) {
+      // Use the detailed per-worker data from the tracker
+      workers = workerDetail.map(function (w) {
+        var ppe = w.ppe || {};
+        var wViolations = Array.isArray(w.violations) ? w.violations : [];
+        var hasHelmet = ppe.helmet !== false;
+        var hasVest = ppe.vest !== false;
+        var hasGloves = ppe.gloves !== false;
+        var hasBoots = ppe.boots !== false;
+        var missingCount = (!hasHelmet ? 1 : 0) + (!hasVest ? 1 : 0) + (!hasGloves ? 1 : 0) + (!hasBoots ? 1 : 0);
+        var risk = w.risk || (missingCount === 0 ? "Low" : missingCount === 1 ? "Medium" : "High");
+        var safetyScoreW = Math.max(38, 100 - missingCount * 15);
+        return {
+          id: w.id || ("Worker-" + pad(w.track_id || 1)),
+          name: "Operator " + (w.id || ("Worker-" + pad(w.track_id || 1))).replace("Worker-", ""),
+          shift: "Shift A (06:00-14:00)",
+          ppe: {
+            helmet: hasHelmet,
+            vest: hasVest,
+            gloves: hasGloves,
+            shoes: hasBoots
+          },
+          zone: w.zone || "Zone-A",
+          movement: "Walking",
+          risk: risk,
+          safetyScore: safetyScoreW,
+          violations: wViolations.length,
+          active: w.active !== false,
+          lastSeen: pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()),
+          confidence: w.confidence || 90
+        };
+      });
+    } else if (workerCount > 0) {
+      // Fallback: backend gave a count but no detail — build minimal stubs
+      for (var wi = 1; wi <= workerCount; wi++) {
+        workers.push({
+          id: "Worker-" + pad(wi),
+          name: "Operator " + pad(wi),
+          shift: "Shift A (06:00-14:00)",
+          ppe: { helmet: true, vest: true, gloves: true, shoes: true },
+          zone: "Zone-A",
+          movement: "Walking",
+          risk: "Low",
+          safetyScore: 100,
+          violations: 0,
+          active: true,
+          lastSeen: pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()),
+          confidence: 90
+        });
+      }
+    }
+
     return {
       mode: "LIVE",
       video: videoMeta ? {
@@ -1385,7 +1443,7 @@ Backend:
         fps: videoMeta.fps,
         url: videoMeta.url
       } : (data.video || null),
-      workers: [],
+      workers: workers,
       alerts: alerts,
       violations: events,
       ppeCompliance: ppeCompliance,

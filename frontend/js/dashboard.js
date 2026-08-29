@@ -938,17 +938,40 @@
     // reports
     $("#axGenerateReport").addEventListener("click", function () {
       var d = data();
-      if (!d.workers.length) { toast("Run a video analysis first.", "error"); return; }
+
+      // Add to in-dashboard report table (works with or without prior analysis)
+      var reportId = "RPT-" + Math.floor(Math.random() * 9000 + 1000);
       d.reports.unshift({
-        id: "RPT-" + Math.floor(Math.random() * 9000 + 1000),
+        id: reportId,
         name: "AwareX Safety Analysis " + new Date().toLocaleDateString(),
         video: d.video ? d.video.name : "current-analysis",
         date: new Date().toISOString().slice(0, 10),
-        workers: d.workers.length, violations: d.violations.length,
-        safetyScore: d.safetyScore, status: "Ready"
+        workers: d.workers.length,
+        violations: d.violations.length,
+        safetyScore: d.safetyScore,
+        status: "Ready"
       });
       renderReports();
-      toast("New report generated.", "success");
+
+      // Also trigger a real HTML report download from the backend
+      var apiBase = window.AwareXData.api.baseUrl || "http://127.0.0.1:8003";
+      var url = apiBase + "/api/report?format=html";
+      fetch(url)
+        .then(function (resp) {
+          if (!resp.ok) { throw new Error("HTTP " + resp.status); }
+          return resp.blob();
+        })
+        .then(function (blob) {
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = reportId + "-awarex-report.html";
+          a.click();
+          toast("Real report downloaded from backend.", "success");
+        })
+        .catch(function (err) {
+          // Backend download failed — in-dashboard report still added above
+          toast("Report added to table. Backend download failed: " + err.message, "info");
+        });
     });
 
     // settings tabs
@@ -968,6 +991,66 @@
     });
 
     window.addEventListener("hashchange", function () { go(location.hash.slice(1)); });
+
+    // ── AwareX Safety Chatbot ──────────────────────────────────────────────
+    var chatPanel = $("#axChatPanel");
+    var chatInput = $("#axChatInput");
+
+    function chatToggle() {
+      var hidden = chatPanel.style.display === "none" || chatPanel.style.display === "";
+      chatPanel.style.display = hidden ? "flex" : "none";
+      if (hidden) {
+        chatInput.focus();
+        // Show welcome message if empty
+        var msgs = $("#axChatMessages");
+        if (!msgs.children.length) {
+          appendChatMsg("bot", "Hello! I'm AwareX Safety Intelligence. Ask me about violations, workers, zones, or say 'Give me a safety summary'.");
+        }
+      }
+    }
+
+    function appendChatMsg(role, text) {
+      var msgs = $("#axChatMessages");
+      var el = document.createElement("div");
+      el.style.cssText = "max-width:90%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;" +
+        (role === "user"
+          ? "align-self:flex-end;background:#004AC6;color:#fff;border-bottom-right-radius:3px;"
+          : "align-self:flex-start;background:#fff;border:1px solid #E2E8F0;color:#1a202c;border-bottom-left-radius:3px;");
+      el.textContent = text;
+      msgs.appendChild(el);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function sendChat() {
+      var msg = chatInput.value.trim();
+      if (!msg) return;
+      appendChatMsg("user", msg);
+      chatInput.value = "";
+
+      var apiBase = window.AwareXData.api.baseUrl || "http://127.0.0.1:8003";
+      fetch(apiBase + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      })
+        .then(function (resp) {
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          return resp.json();
+        })
+        .then(function (data) {
+          appendChatMsg("bot", data.answer || "No response from safety AI.");
+        })
+        .catch(function (err) {
+          appendChatMsg("bot", "Could not reach AwareX backend: " + err.message + ". Make sure the backend is running on port 8003.");
+        });
+    }
+
+    $("#axChatToggle").addEventListener("click", chatToggle);
+    $("#axChatClose").addEventListener("click", function () { chatPanel.style.display = "none"; });
+    $("#axChatSend").addEventListener("click", sendChat);
+    chatInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sendChat(); });
+    // ── End Chatbot ────────────────────────────────────────────────────────
+
     go(location.hash.slice(1) || "dashboard");
   });
 })();

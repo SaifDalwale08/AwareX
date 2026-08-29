@@ -74,9 +74,12 @@
         <div class="ax-topbar__sub" id="axPageSub">AwareX AI Industrial Safety Command Center</div>
       </div>
       <div class="ax-topbar__spacer"></div>
-      <span class="ax-chip ax-chip--demo" title="No AI backend connected yet">
-        <span class="material-symbols-outlined" style="font-size:15px;">science</span>DEMO MODE
+      <span class="ax-chip ax-chip--ok" title="AwareX AI backend connected" id="axBackendBadge">
+        <span class="material-symbols-outlined" style="font-size:15px;">bolt</span>AI CONNECTED
       </span>
+      <button class="ax-btn ax-btn--primary ax-btn--sm" id="axChatToggle" title="AwareX Safety Chatbot" style="gap:6px;">
+        <span class="material-symbols-outlined" style="font-size:18px;">smart_toy</span>Ask AI
+      </button>
       <a class="ax-btn ax-btn--ghost ax-btn--sm" href="index.html" title="Back to website">
         <span class="material-symbols-outlined" style="font-size:18px;">home</span>
       </a>
@@ -342,6 +345,24 @@
   <div class="ax-modal__panel">
     <button class="ax-modal__close ax-no-print" data-close-modal aria-label="Close"><span class="material-symbols-outlined">close</span></button>
     <div id="axModalBody"></div>
+  </div>
+</div>
+
+<!-- ============ CHATBOT PANEL ============ -->
+<div id="axChatPanel" style="display:none;position:fixed;bottom:24px;right:24px;width:360px;max-height:520px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,74,198,.18);z-index:9999;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="background:#004AC6;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+    <span class="material-symbols-outlined">smart_toy</span>
+    <div style="flex:1;font-size:14px;font-weight:700;">AwareX Safety Intelligence</div>
+    <button id="axChatClose" style="background:none;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <div id="axChatMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:340px;background:#F7F9FB;"></div>
+  <div style="padding:12px;background:#fff;border-top:1px solid #E2E8F0;display:flex;gap:8px;">
+    <input id="axChatInput" class="ax-input" placeholder="Ask about safety data..." style="flex:1;font-size:13px;" autocomplete="off"/>
+    <button id="axChatSend" class="ax-btn ax-btn--primary ax-btn--sm">
+      <span class="material-symbols-outlined" style="font-size:18px;">send</span>
+    </button>
   </div>
 </div>
 
