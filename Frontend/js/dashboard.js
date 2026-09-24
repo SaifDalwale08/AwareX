@@ -697,7 +697,9 @@
   /* ----- live monitoring ----- */
   function liveStats(extra) {
     var s = Object.assign({ source: "Laptop Webcam", resolution: "-", fps: "-", status: "Camera Off", uptime: "00:00:00" }, extra || {});
-    $("#axCamStats").innerHTML =
+    var el = $("#axCamStats");
+    if (!el) return;
+    el.innerHTML =
       "<li><span style='flex:1'>Source</span><strong>" + esc(s.source) + "</strong></li>" +
       "<li><span style='flex:1'>Resolution</span><strong>" + esc(s.resolution) + "</strong></li>" +
       "<li><span style='flex:1'>FPS</span><strong>" + esc(s.fps) + "</strong></li>" +
@@ -863,7 +865,8 @@
       toast("This browser does not support camera access.", "error");
       return;
     }
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(function (stream) {
+
+    function _applyStream(stream) {
       camera.alertBaseline = (data().alerts || []).map(function (alert) { return alert.id; });
       camera.startedAt = Date.now();
       camera.stream = stream;
@@ -884,7 +887,6 @@
       var track = stream.getVideoTracks()[0];
       var settings = track.getSettings ? track.getSettings() : {};
 
-      // ── Status-bar timer (1 s) ──
       camera.timer = setInterval(function () {
         liveStats({
           source: track.label || "Laptop Webcam",
@@ -898,35 +900,26 @@
         checkForNewBackendAlert();
       }, 1000);
 
-      // ── Frame-capture + AI timer (1 s) ──
-      // Uses a hidden canvas to grab a JPEG and POST to /api/analyze-frame
       var _canvas = document.createElement("canvas");
       var _apiBase = window.AwareXData.api.baseUrl || "http://127.0.0.1:8003";
-      var _busy = false;   // prevents concurrent overlapping requests
+      var _busy = false;
 
       camera.frameTimer = setInterval(function () {
         if (_busy || !camera.stream) return;
         if (!video.videoWidth || !video.videoHeight) return;
-
         _canvas.width  = video.videoWidth;
         _canvas.height = video.videoHeight;
         var ctx = _canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, _canvas.width, _canvas.height);
-
         _canvas.toBlob(function (blob) {
           if (!blob) return;
           _busy = true;
           camera.framesSent++;
-
           var fd = new FormData();
           fd.append("frame", blob, "webcam_frame.jpg");
           fd.append("camera", "Laptop-Camera");
           fd.append("zone", "Zone-A");
-
-          fetch(_apiBase + "/api/analyze-frame", {
-            method: "POST",
-            body: fd
-          })
+          fetch(_apiBase + "/api/analyze-frame", { method: "POST", body: fd })
             .then(function (resp) {
               if (!resp.ok) throw new Error("HTTP " + resp.status);
               return resp.json();
@@ -940,14 +933,75 @@
               _busy = false;
             });
         }, "image/jpeg", 0.75);
-      }, 1000);   // 1 frame per second — practical for CPU-based backend
+      }, 1000);
 
       renderLivePipeline();
       renderLiveMetrics();
       toast("Live camera started. AI analysis running at 1 fps.", "success");
-    }).catch(function (err) {
-      toast("Camera permission denied or unavailable: " + err.name, "error");
-    });
+    }
+
+    function _showCameraError(msg) {
+      console.error("[AwareX camera]", msg);
+      toast(msg, "error");
+      var note = $("#axLiveDetectionNote");
+      if (note) note.innerHTML =
+        '<span class="material-symbols-outlined" style="color:#DC2626;">error</span>' +
+        '<span style="color:#DC2626;">' + msg + '</span>';
+      var badge = $("#axLiveBadge");
+      if (badge) { badge.className = "ax-chip ax-chip--critical"; badge.textContent = "Camera Error"; }
+    }
+
+    // Try a sequence of constraints; stop at first success.
+    // This handles NotReadableError (hardware locked) by trying alternate device IDs.
+    function _tryConstraints(constraintsList, idx) {
+      if (idx >= constraintsList.length) {
+        _showCameraError(
+          "Could not open any camera. Check that no other app is using the webcam, " +
+          "then try again. (NotReadableError)"
+        );
+        return;
+      }
+      navigator.mediaDevices.getUserMedia(constraintsList[idx])
+        .then(_applyStream)
+        .catch(function (err) {
+          var isRetryable = (
+            err.name === "NotReadableError" ||
+            err.name === "AbortError" ||
+            err.name === "OverconstrainedError"
+          );
+          if (isRetryable) {
+            // Retry next constraint set
+            _tryConstraints(constraintsList, idx + 1);
+          } else {
+            // NotAllowedError, NotFoundError etc. — no point retrying
+            var msg = "Camera unavailable: " + err.name;
+            if (err.message) msg += " — " + err.message;
+            _showCameraError(msg);
+          }
+        });
+    }
+
+    // Build constraint list: default first, then enumerate actual device IDs as fallbacks
+    var defaultConstraints = [
+      { video: true,                                    audio: false },
+      { video: { facingMode: "user" },                  audio: false },
+      { video: { facingMode: "environment" },           audio: false },
+    ];
+
+    if (navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().then(function (devices) {
+        var videoDevices = devices.filter(function (d) { return d.kind === "videoinput"; });
+        var perDevice = videoDevices.map(function (d) {
+          return { video: { deviceId: { exact: d.deviceId } }, audio: false };
+        });
+        _tryConstraints(defaultConstraints.concat(perDevice), 0);
+      }).catch(function () {
+        // enumerateDevices failed — fall back to defaults only
+        _tryConstraints(defaultConstraints, 0);
+      });
+    } else {
+      _tryConstraints(defaultConstraints, 0);
+    }
   }
 
   function stopCamera() {

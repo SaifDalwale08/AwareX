@@ -35,10 +35,98 @@ if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
 
 # ==========================================
+# Local Event Journal + Blackout Layer
+# ==========================================
+
+import logging as _log_mod
+_main_logger = _log_mod.getLogger("awarex.main")
+
+from backend.local_event_store import (
+    write_event   as _local_write,
+    mark_synced   as _local_mark_synced,
+    mark_failed   as _local_mark_failed,
+    get_pending   as _local_get_pending,
+    pending_count as _local_pending_count,
+    last_sync_time as _local_last_sync,
+    stats         as _local_stats,
+)
+
+# Simulated blackout flag — set via /api/demo/blackout, cleared via /api/demo/restore
+_BLACKOUT: bool = False
+_LAST_SYNC_COUNT: int = 0   # how many events were synced on last restore
+
+
+def _supabase_available() -> bool:
+    """Return False if simulated blackout is active."""
+    return not _BLACKOUT
+
+
+def safe_supabase_insert(records: list[dict], event_type: str = "safety_violation") -> tuple[list, bool]:
+    """
+    Write-first: persist locally, then attempt Supabase.
+    Returns (supabase_rows, supabase_ok).
+    Never raises — Supabase failure is logged and queued.
+    """
+    # 1. Write to local journal first (always)
+    local_ids = []
+    for rec in records:
+        severity  = rec.get("severity", "WARNING")
+        worker_id = rec.get("worker_id", rec.get("camera", ""))
+        eid = _local_write(
+            payload    = rec,
+            worker_id  = worker_id,
+            event_type = event_type,
+            severity   = severity,
+        )
+        local_ids.append(eid)
+
+    # 2. Attempt Supabase write
+    if not _supabase_available():
+        _main_logger.warning("[Blackout] Supabase unavailable — %d event(s) queued locally", len(records))
+        return [], False
+
+    try:
+        resp = supabase.table("safety_events").insert(records).execute()
+        if getattr(resp, "error", None):
+            raise RuntimeError(str(resp.error))
+        # Mark local copies as synced
+        for eid in local_ids:
+            _local_mark_synced(eid)
+        return resp.data or [], True
+    except Exception as exc:
+        _main_logger.warning("[Blackout] Supabase insert failed: %s — events remain PENDING", exc)
+        return [], False
+
+
+def _sync_pending_to_supabase() -> int:
+    """
+    Push PENDING local events to Supabase.
+    Returns number of events successfully synced.
+    """
+    pending = _local_get_pending()
+    synced  = 0
+    for row in pending:
+        try:
+            payload = json.loads(row["payload"])
+            # Remove any local-only keys Supabase doesn't expect
+            for k in ("event_id_local",):
+                payload.pop(k, None)
+            resp = supabase.table("safety_events").insert(payload).execute()
+            if getattr(resp, "error", None):
+                raise RuntimeError(str(resp.error))
+            _local_mark_synced(row["event_id"])
+            synced += 1
+        except Exception as exc:
+            _main_logger.warning("[Sync] Failed to sync event %s: %s", row["event_id"], exc)
+            _local_mark_failed(row["event_id"])
+    return synced
+
+# ==========================================
 # AwareX AI
 # ==========================================
 
-from AI.inference import analyze_image
+from AI.inference import analyze_image, analyze_numpy as _analyze_numpy_ppe
+from AI.incident_model import analyze_frame as _analyze_incident_numpy
 from AI.safety_engine import analyze_safety
 from AI.worker_tracking import WorkerTracker
 from AI.notification_service import send_critical_alert, build_alert_message
@@ -136,8 +224,8 @@ def analyze_image_endpoint(request: AnalyzeRequest):
             "recommendation": safety_result["recommendation"],
             "status":         "OPEN",
         }
-        response = supabase.table("safety_events").insert(event).execute()
-        stored_events.extend(response.data or [])
+        rows, _ = safe_supabase_insert([event], event_type="safety_violation")
+        stored_events.extend(rows)
     return {
         "success":       True,
         "camera":        request.camera,
@@ -185,92 +273,174 @@ def analyze_video(
         with open(upload_path, "wb") as out_file:
             shutil.copyfileobj(video.file, out_file)
 
+        _t_start = _time.perf_counter()
+
+        # ── Reset tracker for this video — critical to avoid ID bleed ──
+        worker_tracker.reset()
+
         capture = cv2.VideoCapture(upload_path)
         if not capture.isOpened():
             raise HTTPException(status_code=400, detail="Unable to open uploaded video.")
 
         fps         = float(capture.get(cv2.CAP_PROP_FPS) or 0)
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        width       = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
+        height      = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
 
-        sampled_frames   = 0
-        frames_processed = 0
-        all_detections   = []
-        worker_ids       = set()
+        _logger.info("[VIDEO] file=%s  res=%dx%d  fps=%.1f  frames=%d  device=%s",
+                     safe_name, width, height, fps, frame_count, _ai_device)
+
+        # ── Dynamic FPS-aware sampling ───────────────────────────────────
+        # Target ~2 analysed frames per second (configurable via SAMPLE_FPS).
+        # We build an explicit list of frame indices and use seek (set POS_FRAMES)
+        # so we never decode frames we don't need.
+        TARGET_SAMPLE_FPS = float(os.getenv("SAMPLE_FPS", "2"))
+        if fps > 0 and TARGET_SAMPLE_FPS > 0:
+            sample_interval = max(1, int(round(fps / TARGET_SAMPLE_FPS)))
+        else:
+            sample_interval = max(1, int(os.getenv("VIDEO_FRAME_INTERVAL", "10")))
+
+        target_frames = list(range(0, max(1, frame_count), sample_interval))
+        if not target_frames:
+            target_frames = [0]
+
+        # ── Max inference resolution (preserves aspect ratio) ────────────
+        MAX_INFER_DIM = int(os.getenv("MAX_INFER_DIM", "1280"))
+
+        def _resize_for_infer(img):
+            h, w = img.shape[:2]
+            if max(h, w) <= MAX_INFER_DIM:
+                return img, 1.0
+            scale = MAX_INFER_DIM / max(h, w)
+            return cv2.resize(img, (int(w * scale), int(h * scale)),
+                              interpolation=cv2.INTER_LINEAR), scale
+
+        _logger.info("[VIDEO] sample_interval=%d  target_frames=%d  max_dim=%d",
+                     sample_interval, len(target_frames), MAX_INFER_DIM)
+
+        sampled_frames    = 0
+        frames_processed  = len(target_frames)
+        all_detections    = []
+        worker_ids        = set()
         worker_ppe_map: dict = {}
-        frame_index      = 0
+        _peak_detections_per_frame = 0
+        incident_results  = []
+        t_worker = t_ppe = t_inc = 0.0
 
-        while True:
+        for fi in target_frames:
+            capture.set(cv2.CAP_PROP_POS_FRAMES, fi)
             ret, frame = capture.read()
             if not ret:
-                break
-            frames_processed += 1
-            frame_index      += 1
-            if frame_index != 1 and frame_index % VIDEO_FRAME_INTERVAL != 0:
                 continue
             sampled_frames += 1
 
+            frame_small, scale = _resize_for_infer(frame)
+            inv_scale = (1.0 / scale) if scale != 1.0 else 1.0
+
+            # ── Worker tracking on downscaled frame ──────────────────────
+            _ts = _time.perf_counter()
             try:
-                workers = worker_tracker.track_frame(frame)
-                for worker in workers:
-                    track_id = worker.get("track_id")
-                    if track_id is not None:
-                        worker_ids.add(track_id)
-                        if track_id not in worker_ppe_map:
-                            worker_ppe_map[track_id] = {
-                                "bbox":           worker.get("bbox"),
-                                "confidence":     worker.get("confidence", 0.0),
-                                "ppe_seen":       [],
-                                "violations_seen":[],
-                            }
+                workers_raw = worker_tracker.track_frame(frame_small)
             except Exception as exc:
                 raise HTTPException(status_code=500, detail=f"Worker tracking failure: {exc}")
+            t_worker += _time.perf_counter() - _ts
 
-            frame_file = os.path.join(temp_dir, f"frame_{frame_index}.jpg")
-            if not cv2.imwrite(frame_file, frame):
-                raise HTTPException(status_code=500, detail="Failed to write temporary frame image.")
+            # Scale bboxes back to original resolution
+            workers = []
+            for rw in workers_raw:
+                bb = rw.get("bbox", [])
+                if bb and scale != 1.0:
+                    bb = [round(x * inv_scale) for x in bb]
+                workers.append({**rw, "bbox": bb})
 
+            n_detected = len(workers)
+            if n_detected > _peak_detections_per_frame:
+                _peak_detections_per_frame = n_detected
+
+            for worker in workers:
+                track_id = worker.get("track_id")
+                if track_id is not None:
+                    worker_ids.add(track_id)
+                    if track_id not in worker_ppe_map:
+                        worker_ppe_map[track_id] = {
+                            "bbox":            worker.get("bbox"),
+                            "confidence":      worker.get("confidence", 0.0),
+                            "ppe_seen":        [],
+                            "violations_seen": [],
+                        }
+
+            # ── PPE detection — numpy, no disk write ─────────────────────
+            _ts = _time.perf_counter()
             try:
-                frame_detections = analyze_image(frame_file)
+                frame_detections = _analyze_numpy_ppe(frame_small)
             except Exception as exc:
-                raise HTTPException(status_code=500, detail=f"YOLO failure: {exc}")
-            finally:
-                try:
-                    os.remove(frame_file)
-                except OSError:
-                    pass
+                raise HTTPException(status_code=500, detail=f"PPE YOLO failure: {exc}")
+            t_ppe += _time.perf_counter() - _ts
+
+            # Scale PPE bboxes back to original resolution
+            if scale != 1.0:
+                for det in frame_detections:
+                    det["bbox"] = [round(x * inv_scale) for x in det["bbox"]]
+
+            # ── Incident detection — numpy, no disk write ─────────────────
+            _ts = _time.perf_counter()
+            try:
+                inc = _analyze_incident_numpy(frame_small)
+                incident_results.append(inc)
+            except Exception:
+                pass
+            t_inc += _time.perf_counter() - _ts
 
             all_detections.extend(frame_detections)
 
-            if worker_ids and frame_detections:
-                frame_workers = workers if workers else []
-                for detection in frame_detections:
-                    det_bbox = detection.get("bbox", [])
-                    if len(det_bbox) == 4:
-                        det_cx = (det_bbox[0] + det_bbox[2]) / 2
-                        det_cy = (det_bbox[1] + det_bbox[3]) / 2
-                        best_id, best_dist = None, float("inf")
-                        for w in frame_workers:
-                            w_bbox = w.get("bbox", [])
-                            if len(w_bbox) == 4:
-                                w_cx = (w_bbox[0] + w_bbox[2]) / 2
-                                w_cy = (w_bbox[1] + w_bbox[3]) / 2
-                                dist = ((det_cx - w_cx)**2 + (det_cy - w_cy)**2)**0.5
-                                if dist < best_dist:
-                                    best_dist, best_id = dist, w.get("track_id")
-                        if best_id is not None and best_dist < 300:
-                            entry = worker_ppe_map.setdefault(best_id, {
-                                "bbox": None, "confidence": 0.0,
-                                "ppe_seen": [], "violations_seen": [],
-                            })
-                            cls = detection["class"]
-                            lst = "violations_seen" if cls.startswith("no-") else "ppe_seen"
-                            if cls not in entry[lst]:
-                                entry[lst].append(cls)
+            # ── PPE ↔ worker association ──────────────────────────────────
+            frame_workers = workers if workers else []
+            for detection in frame_detections:
+                det_bbox = detection.get("bbox", [])
+                if len(det_bbox) != 4:
+                    continue
+                det_cx = (det_bbox[0] + det_bbox[2]) / 2
+                det_cy = (det_bbox[1] + det_bbox[3]) / 2
+                best_id, best_dist = None, float("inf")
+                for w in frame_workers:
+                    w_bbox = w.get("bbox", [])
+                    if len(w_bbox) == 4:
+                        w_cx = (w_bbox[0] + w_bbox[2]) / 2
+                        w_cy = (w_bbox[1] + w_bbox[3]) / 2
+                        dist = ((det_cx - w_cx)**2 + (det_cy - w_cy)**2)**0.5
+                        if dist < best_dist:
+                            best_dist = dist
+                            best_id   = w.get("track_id")
+                if best_id is not None and best_dist < 400:
+                    entry = worker_ppe_map.setdefault(best_id, {
+                        "bbox": None, "confidence": 0.0,
+                        "ppe_seen": [], "violations_seen": [],
+                    })
+                    cls = detection["class"]
+                    lst = "violations_seen" if cls.startswith("no-") else "ppe_seen"
+                    if cls not in entry[lst]:
+                        entry[lst].append(cls)
 
         capture.release()
 
-        if frames_processed == 0:
+        if sampled_frames == 0:
             raise HTTPException(status_code=400, detail="Uploaded video contains no readable frames.")
+
+        # ── Worker count ────────────────────────────────────────────────
+        total_workers = len(worker_ids)
+        if total_workers == 0 and _peak_detections_per_frame > 0:
+            total_workers = _peak_detections_per_frame
+            _logger.warning(
+                "[VIDEO] No stable track IDs — using peak detection count %d",
+                total_workers,
+            )
+
+        _logger.info(
+            "[AI] workers=%d  t_worker=%.2fs  t_ppe=%.2fs  t_inc=%.2fs  "
+            "sampled=%d/%d  target_fps=%.1f",
+            total_workers, t_worker, t_ppe, t_inc,
+            sampled_frames, frame_count, TARGET_SAMPLE_FPS,
+        )
 
         safety_result = analyze_safety(all_detections)
 
@@ -295,12 +465,9 @@ def analyze_video(
 
         stored_events = []
         if deduped_violations:
-            response = supabase.table("safety_events").insert(deduped_violations).execute()
-            if getattr(response, "error", None):
-                raise HTTPException(status_code=500, detail=f"Supabase insert failed: {response.error}")
-            stored_events = response.data or []
+            rows, _ = safe_supabase_insert(deduped_violations, event_type="safety_violation")
+            stored_events = rows
 
-        total_workers       = len(worker_ids)
         notification_results = []
         for v in deduped_violations:
             if v["severity"] == "CRITICAL":
@@ -344,6 +511,17 @@ def analyze_video(
                 "active":      True,
             })
 
+        # ── Incident summary ──
+        incident_summary = {"incident_detected": False, "incident_type": None,
+                            "confidence": 0.0, "bbox": None, "note": "No incident model or no frames"}
+        for ir in incident_results:
+            if ir.get("incident_detected") and ir.get("confidence", 0) > incident_summary["confidence"]:
+                incident_summary = ir
+
+        _logger.info("[AI] violations=%d  safety_score=%.1f  severity=%s  incident=%s",
+                     len(deduped_violations), safety_result["safety_score"],
+                     safety_result["severity"], incident_summary.get("incident_type", "none"))
+
         return {
             "success":            True,
             "workers":            total_workers,
@@ -366,6 +544,14 @@ def analyze_video(
             "recommendations":    [safety_result["recommendation"]],
             "stored_events":      stored_events,
             "notifications":      notification_results,
+            "incident":           incident_summary,
+            "ai_device":          _ai_device,
+            "timing": {
+                "worker_s":   round(t_worker, 2),
+                "ppe_s":      round(t_ppe, 2),
+                "incident_s": round(t_inc, 2),
+                "total_s":    round(_time.perf_counter() - _t_start, 2),
+            },
         }
 
     finally:
@@ -404,10 +590,10 @@ async def analyze_frame(
 
         result = live_monitor.process_frame(frame_path, camera=camera, zone=zone)
 
-        # Store any NEW persistent critical events in Supabase
+        # Store any NEW persistent critical events — write-first via safe_supabase_insert
         for evt in result.get("new_critical_events", []):
             try:
-                supabase.table("safety_events").insert({
+                safe_supabase_insert([{
                     "camera":         evt["camera"],
                     "zone":           evt["zone"],
                     "violation":      evt["violation"],
@@ -415,7 +601,7 @@ async def analyze_frame(
                     "severity":       "CRITICAL",
                     "recommendation": "Immediate safety intervention required. Critical PPE violations detected.",
                     "status":         "OPEN",
-                }).execute()
+                }], event_type="safety_violation")
             except Exception:
                 pass  # non-fatal
 
@@ -867,11 +1053,11 @@ def _build_html_report(events, critical_events, warning_events, violation_counts
             time_str = created
         sev   = e.get("severity", "")
         sev_c = "#DC2626" if str(sev).upper() == "CRITICAL" else "#D97706"
-        conf  = round(float(e.get("confidence", 0)) * 100)
+        conf  = round(float(e.get("confidence") or 0) * 100)
         violation_rows += (
             f"<tr><td>{e.get('violation','?')}</td><td>{e.get('camera','?')}</td>"
             f"<td>{e.get('zone','?')}</td><td style='color:{sev_c};font-weight:700'>{sev}</td>"
-            f"<td>{conf}%</td><td>{time_str}</td><td>{e.get('recommendation','')[:80]}</td></tr>"
+            f"<td>{conf}%</td><td>{time_str}</td><td>{(e.get('recommendation') or '')[:80]}</td></tr>"
         )
     vio_freq_rows = "".join(
         f"<tr><td>{v}</td><td>{c}</td></tr>"
@@ -984,3 +1170,274 @@ def _generate_pdf_report(events, critical_events, warning_events, violation_coun
         buf, media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{report_id}-awarex-report.pdf"'},
     )
+
+# ==========================================
+# SYSTEM STATUS
+# ==========================================
+
+@app.get("/api/system-status")
+def system_status():
+    """
+    Returns primary store health, blackout mode, local queue depth, and last sync time.
+    Used by the frontend to show NORMAL / BLACKOUT / RECOVERY banners.
+    """
+    global _BLACKOUT, _LAST_SYNC_COUNT
+    store_stats = _local_stats()
+    pending     = store_stats["pending"]
+    last_sync   = _local_last_sync()
+
+    if _BLACKOUT:
+        mode = "BLACKOUT"
+        primary_store = "simulated_disconnected"
+    else:
+        mode = "NORMAL"
+        primary_store = "connected"
+
+    return {
+        "success":        True,
+        "mode":           mode,
+        "primary_store":  primary_store,
+        "blackout_demo":  _BLACKOUT,
+        "local_queue": {
+            "pending":  pending,
+            "synced":   store_stats["synced"],
+            "failed":   store_stats["failed"],
+            "total":    store_stats["total"],
+            "db_path":  store_stats["db_path"],
+        },
+        "last_sync":          last_sync,
+        "last_sync_count":    _LAST_SYNC_COUNT,
+    }
+
+
+# ==========================================
+# DEMO: BLACKOUT / RESTORE
+# ==========================================
+
+@app.post("/api/demo/blackout")
+def demo_blackout():
+    """
+    DEMO ONLY — simulates Supabase becoming unavailable.
+    Does NOT delete or modify any real Supabase data.
+    """
+    global _BLACKOUT
+    _BLACKOUT = True
+    _main_logger.warning("[DEMO] Blackout activated — Supabase writes suppressed")
+    return {
+        "success":  True,
+        "mode":     "BLACKOUT",
+        "message":  "Simulated datastore failure active. AI monitoring continues. Events queued locally.",
+        "warning":  "DEMO MODE — no real Supabase data was deleted or modified.",
+    }
+
+
+@app.post("/api/demo/restore")
+def demo_restore():
+    """
+    DEMO ONLY — restores simulated Supabase availability and synchronises pending events.
+    """
+    global _BLACKOUT, _LAST_SYNC_COUNT
+    _BLACKOUT = False
+    _main_logger.info("[DEMO] Restore triggered — syncing pending events to Supabase")
+
+    synced = 0
+    try:
+        synced = _sync_pending_to_supabase()
+        _LAST_SYNC_COUNT = synced
+    except Exception as exc:
+        _main_logger.error("[DEMO] Sync error: %s", exc)
+
+    pending_after = _local_pending_count()
+    _main_logger.info("[DEMO] Restore complete — synced=%d  still_pending=%d", synced, pending_after)
+
+    return {
+        "success":       True,
+        "mode":          "NORMAL",
+        "events_synced": synced,
+        "pending_after": pending_after,
+        "message":       f"Datastore restored. {synced} event(s) synchronised to Supabase.",
+    }
+
+
+@app.post("/api/demo/sync")
+def demo_sync():
+    """Manually trigger a sync of any pending local events to Supabase."""
+    global _LAST_SYNC_COUNT
+    try:
+        synced = _sync_pending_to_supabase()
+        _LAST_SYNC_COUNT = synced
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+    return {
+        "success":       True,
+        "events_synced": synced,
+        "pending_after": _local_pending_count(),
+    }
+
+
+# ==========================================
+# CHALLENGE 2 — VERIFICATION / TRUST LAYER
+# ==========================================
+
+class VerifyRequest(BaseModel):
+    claim:        str
+    source:       str   = "unspecified"
+    submitted_by: str   = "anonymous"
+    context:      str   = ""           # optional additional context
+
+class VerifyResponse(BaseModel):
+    status:             str    # UNVERIFIED | UNDER_REVIEW | VERIFIED | DISPUTED | REJECTED
+    confidence:         float  # 0.0 – 1.0
+    reason:             str
+    source:             str
+    evidence:           str
+    timestamp:          str
+    submitted_by:       str
+    warning:            str
+
+_SAFE_CLAIM_PATTERNS = [
+    "area is safe", "zone is safe", "no hazard", "all clear",
+    "workers are compliant", "no violations", "safe to proceed",
+]
+
+_CRITICAL_KEYWORDS = [
+    "safe", "clear", "no hazard", "compliant", "no violation",
+    "no risk", "all good", "no incident", "no accident",
+]
+
+def _check_claim_against_events(claim_lower: str) -> dict:
+    """
+    Cross-reference the claim against real Supabase safety events.
+    Returns a dict with status, confidence, reason, evidence.
+    Never fabricates evidence.
+    """
+    try:
+        resp   = supabase.table("safety_events").select("*").order("created_at", desc=True).limit(20).execute()
+        events = resp.data or []
+    except Exception:
+        events = []
+
+    pending = _local_pending_count()
+    local_queue_note = f" ({pending} local PENDING events not yet synced)." if pending > 0 else ""
+
+    # Check if the claim asserts safety/clearance
+    claims_safety = any(kw in claim_lower for kw in _CRITICAL_KEYWORDS)
+
+    if claims_safety:
+        critical = [e for e in events if str(e.get("severity","")).upper() == "CRITICAL" and
+                    str(e.get("status","")).upper() != "RESOLVED"]
+        if critical:
+            latest = critical[0]
+            evidence = (
+                f"Active critical violation on record: {latest.get('violation','?')} "
+                f"in {latest.get('zone','?')} at {latest.get('created_at','?')[:16]}. "
+                f"This contradicts the safety claim."
+            )
+            return {
+                "status":     "DISPUTED",
+                "confidence": 0.9,
+                "reason":     (
+                    "AwareX safety database contains active critical violations "
+                    "that contradict this claim. Cannot verify as safe."
+                ),
+                "evidence": evidence + local_queue_note,
+            }
+        if events:
+            return {
+                "status":     "UNDER_REVIEW",
+                "confidence": 0.4,
+                "reason":     (
+                    "No active critical violations found in the safety database, "
+                    "but the claim has not been independently verified. "
+                    "Human review is required before marking as verified."
+                ),
+                "evidence": (
+                    f"{len(events)} safety event(s) on record, none currently critical."
+                    + local_queue_note
+                ),
+            }
+        return {
+            "status":     "UNVERIFIED",
+            "confidence": 0.1,
+            "reason":     (
+                "No safety events in the database to cross-reference this claim. "
+                "Cannot confirm or deny. Do not rely on this claim without verified evidence."
+            ),
+            "evidence": "No safety event data available." + local_queue_note,
+        }
+
+    # Non-safety-assertion claim — return UNDER_REVIEW
+    return {
+        "status":     "UNDER_REVIEW",
+        "confidence": 0.2,
+        "reason":     "Claim queued for review. No automated verification rule applies.",
+        "evidence":   "Manual verification required." + local_queue_note,
+    }
+
+
+@app.post("/api/verify")
+def verify_claim(request: VerifyRequest) -> dict:
+    """
+    Challenge 2: Verification / Trust Layer.
+
+    Evaluates a claim/report against real AwareX safety data.
+    NEVER marks a claim VERIFIED without evidence.
+    NEVER fabricates government schemes, subsidies, or incident facts.
+    """
+    claim_lower = request.claim.lower().strip()
+    now = datetime.now().isoformat()
+
+    if not claim_lower:
+        return VerifyResponse(
+            status="REJECTED", confidence=1.0,
+            reason="Empty claim cannot be verified.",
+            source=request.source, evidence="N/A",
+            timestamp=now, submitted_by=request.submitted_by,
+            warning="",
+        ).model_dump()
+
+    result = _check_claim_against_events(claim_lower)
+
+    warning = ""
+    if result["status"] in ("UNVERIFIED", "UNDER_REVIEW"):
+        warning = (
+            "⚠️ UNVERIFIED — DO NOT RELY ON THIS CLAIM. "
+            "This information has not been confirmed by AwareX safety data."
+        )
+    elif result["status"] == "DISPUTED":
+        warning = (
+            "⛔ DISPUTED — Verified safety data contradicts this claim. "
+            "Do not act on this claim without consulting the safety officer."
+        )
+
+    return {
+        "success":      True,
+        "status":       result["status"],
+        "confidence":   result["confidence"],
+        "reason":       result["reason"],
+        "source":       request.source,
+        "evidence":     result["evidence"],
+        "timestamp":    now,
+        "submitted_by": request.submitted_by,
+        "warning":      warning,
+        "claim":        request.claim,
+    }
+
+
+@app.get("/api/verify/states")
+def verification_states():
+    """Return the valid verification states and their meanings."""
+    return {
+        "states": {
+            "UNVERIFIED":    "Not cross-referenced with any evidence source.",
+            "UNDER_REVIEW":  "Queued for human review; cannot be auto-verified.",
+            "VERIFIED":      "Confirmed by authoritative AwareX safety data.",
+            "DISPUTED":      "Contradicted by verified safety data.",
+            "REJECTED":      "Claim is invalid, empty, or clearly fabricated.",
+        },
+        "policy": (
+            "AwareX never marks a safety claim as VERIFIED without cross-referencing "
+            "real sensor/AI data. Claims asserting safety without evidence are shown "
+            "as UNVERIFIED or DISPUTED."
+        ),
+    }

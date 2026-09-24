@@ -131,10 +131,25 @@ class WorkerTracker:
     def reset(self) -> None:
         """
         Reset all tracker state.  Call before processing a new, unrelated video.
-        Creates a fresh YOLO model instance so ByteTrack ID counters start from 1.
+        Resets ByteTrack internal counters without reloading weights from disk.
         """
         logger.info("[WorkerTracker] resetting tracker state for new video")
-        self._load_model()
+        # Reset ByteTrack/BoTSORT state by calling predict once on a blank frame
+        # (cheaper than reloading weights — avoids disk I/O and GPU re-init)
+        try:
+            import numpy as np
+            blank = np.zeros((64, 64, 3), dtype="uint8")
+            self.model.track(
+                source=blank,
+                persist=False,
+                classes=[0],
+                conf=0.99,   # nothing will be detected on a blank frame
+                device=self._device,
+                verbose=False,
+            )
+        except Exception:
+            # If that fails for any reason, fall back to full reload
+            self._load_model()
 
     @property
     def device(self):

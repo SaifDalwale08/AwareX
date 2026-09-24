@@ -18,7 +18,10 @@ import threading
 import requests
 from pathlib import Path
 
-BASE  = "http://127.0.0.1:8005"
+# Allow port override: python test_backend.py 8003
+import sys
+_PORT = sys.argv[1] if len(sys.argv) > 1 else "8003"
+BASE  = f"http://127.0.0.1:{_PORT}"
 VIDEO = r"D:\AwareX\vidoes\14990643_2160_3840_30fps.mp4"
 TEST_IMAGES_DIR = Path(r"D:\AwareX\Dataset\test\images")
 
@@ -704,6 +707,85 @@ else:
         print("       incident=" + str(inc))
     except Exception as exc:
         check("analyze-frame incident field", False, str(exc))
+
+# ─────────────────────────────────────────────────────────────
+# TEST 19 — Incident model loaded (new fall model)
+# ─────────────────────────────────────────────────────────────
+
+section("TEST 19 — Fall/incident model loaded and path correct")
+try:
+    from AI.incident_model import is_ready, get_model_path, MODEL_PATH as INC_PATH
+    check("incident model is_ready()", is_ready(), get_model_path())
+    check("model path is non-empty",   bool(INC_PATH), INC_PATH[:60] if INC_PATH else "")
+    if is_ready():
+        check("model path contains awarex_fall", "fall" in INC_PATH.lower(), INC_PATH)
+    print("       incident model path: " + get_model_path())
+except Exception as exc:
+    check("Incident model load check", False, str(exc))
+
+# ─────────────────────────────────────────────────────────────
+# TEST 20 — Baseline video regression (no regression check)
+# ─────────────────────────────────────────────────────────────
+
+section("TEST 20 — Baseline video: workers=2 regression  (~2 min)")
+if not Path(VIDEO).exists():
+    check("Baseline video exists", False, VIDEO)
+else:
+    print("       video: " + VIDEO)
+    try:
+        t0 = time.time()
+        with open(VIDEO, "rb") as fh:
+            r = requests.post(
+                BASE + "/api/analyze",
+                files={"video": (Path(VIDEO).name, fh, "video/mp4")},
+                data={"camera": "Camera-01", "zone": "Zone-A"},
+                timeout=600,
+            )
+        elapsed = round(time.time() - t0, 1)
+        body = r.json()
+        print("       completed in " + str(elapsed) + "s")
+        check("HTTP 200",                 r.status_code == 200)
+        check("success=true",             body.get("success") is True)
+        check("workers == 2",             body.get("workers") == 2,    "workers=" + str(body.get("workers")))
+        check("frames_processed == 216",  body.get("frames_processed") == 216)
+        check("sampled_frames == 22",     body.get("sampled_frames") == 22)
+        check("total_detections == 52",   body.get("total_detections") == 52)
+        check("safety_score == 100.0",    body.get("safety_score") == 100.0)
+        check("severity == SAFE",         body.get("severity") == "SAFE")
+        check("incident field present",   "incident" in body)
+        check("ai_device field present",  "ai_device" in body,         str(body.get("ai_device","")))
+        print("       ai_device: " + str(body.get("ai_device", "?")))
+        print("       incident:  " + str(body.get("incident", {}).get("note", "?")))
+    except Exception as exc:
+        check("Baseline video analysis", False, str(exc))
+
+# ─────────────────────────────────────────────────────────────
+# TEST 21 — Second video call uses fresh tracker (no ID bleed)
+# Just call the same video again; worker count must still be 2.
+# ─────────────────────────────────────────────────────────────
+
+section("TEST 21 — Second consecutive video call (tracker reset)  (~2 min)")
+if not Path(VIDEO).exists():
+    check("Video exists for retest", False, VIDEO)
+else:
+    try:
+        t0 = time.time()
+        with open(VIDEO, "rb") as fh:
+            r = requests.post(
+                BASE + "/api/analyze",
+                files={"video": (Path(VIDEO).name, fh, "video/mp4")},
+                data={"camera": "Camera-01", "zone": "Zone-A"},
+                timeout=600,
+            )
+        elapsed = round(time.time() - t0, 1)
+        body = r.json()
+        workers2 = body.get("workers", -1)
+        check("HTTP 200 on second call",           r.status_code == 200)
+        check("workers == 2 on second call",       workers2 == 2,  "workers=" + str(workers2))
+        check("tracker reset — no stale ID bleed", workers2 == 2,  "workers=" + str(workers2))
+        print("       second call workers=" + str(workers2) + "  elapsed=" + str(elapsed) + "s")
+    except Exception as exc:
+        check("Second video call", False, str(exc))
 
 # ─────────────────────────────────────────────────────────────
 # SUMMARY

@@ -63,3 +63,5 @@ frontend/server*.log
 Thumbs.db
 
 datasets/
+
+data/

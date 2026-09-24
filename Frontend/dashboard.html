@@ -82,6 +82,15 @@
       <span class="ax-chip ax-chip--ok" title="AwareX AI backend connected" id="axBackendBadge">
         <span class="material-symbols-outlined" style="font-size:15px;">bolt</span>AI CONNECTED
       </span>
+      <!-- ── Data-store status banner (updated by /api/system-status poll) ── -->
+      <span id="axStoreBadge" class="ax-chip ax-chip--ok" title="Primary data store status" style="gap:5px;">
+        <span class="material-symbols-outlined" style="font-size:14px;">storage</span>
+        <span id="axStoreBadgeText">DATA STORE CONNECTED</span>
+      </span>
+      <!-- ── Claim verification quick-check (Challenge 2) ── -->
+      <button id="axVerifyToggle" class="ax-btn ax-btn--ghost ax-btn--sm" title="Verify a safety claim">
+        <span class="material-symbols-outlined" style="font-size:17px;">verified_user</span>Verify Claim
+      </button>
       <button class="ax-btn ax-btn--primary ax-btn--sm" id="axChatToggle" title="AwareX Safety Chatbot" style="gap:6px;">
         <span class="material-symbols-outlined" style="font-size:18px;">smart_toy</span>Ask AI
       </button>
@@ -177,78 +186,6 @@
         <div id="axFileStage" style="display:none;margin-top:18px;"></div>
         <div id="axAnalysisProgress" style="display:none;margin-top:18px;"></div>
         <div id="axResultStage" style="display:none;margin-top:18px;"></div>
-
-        <!-- ==========================================
-             AWAREX LIVE LAPTOP CAMERA
-             ========================================== -->
-
-        <section class="live-camera-section">
-
-            <div class="section-header">
-                <h2>📷 Live Camera Monitoring</h2>
-                <p>Monitor workplace safety using your laptop camera.</p>
-            </div>
-
-            <div class="camera-container">
-
-                <video
-                    id="liveCamera"
-                    autoplay
-                    playsinline
-                    muted
-                    style="width: 100%; max-width: 720px; border-radius: 12px; display: none;">
-                </video>
-
-                <div id="cameraStatus">
-                    Camera is not active
-                </div>
-
-                <div class="camera-controls">
-
-                    <button
-                        id="startCameraBtn"
-                        type="button">
-                        📷 Start Live Camera
-                    </button>
-
-                    <button
-                        id="stopCameraBtn"
-                        type="button"
-                        disabled>
-                        ⏹ Stop Camera
-                    </button>
-
-                </div>
-
-                <div id="liveSafetyResult" style="display:none;">
-
-                    <h3>Live Safety Status</h3>
-
-                    <div>
-                        <strong>Workers:</strong>
-                        <span id="liveWorkerCount">0</span>
-                    </div>
-
-                    <div>
-                        <strong>Safety Score:</strong>
-                        <span id="liveSafetyScore">--</span>
-                    </div>
-
-                    <div>
-                        <strong>Severity:</strong>
-                        <span id="liveSeverity">--</span>
-                    </div>
-
-                    <div>
-                        <strong>Violations:</strong>
-                        <span id="liveViolations">0</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
 
       </section>
 
@@ -514,6 +451,132 @@
     </button>
   </div>
 </div>
+<!-- ── Claim Verification Panel (Challenge 2) ── -->
+<div id="axVerifyPanel" style="display:none;position:fixed;bottom:24px;left:24px;width:380px;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,74,198,.18);z-index:9998;overflow:hidden;">
+  <div style="background:#1e3a5f;color:#fff;padding:13px 16px;display:flex;align-items:center;gap:10px;">
+    <span class="material-symbols-outlined">verified_user</span>
+    <div style="flex:1;font-size:13px;font-weight:700;">AwareX Claim Verification</div>
+    <button id="axVerifyClose" style="background:none;border:none;color:#fff;cursor:pointer;display:flex;">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <div style="padding:14px;">
+    <p style="font-size:12px;color:#6B7280;margin:0 0 10px;">Enter a claim to verify against real AwareX safety data.</p>
+    <textarea id="axVerifyClaim" rows="2" class="ax-input" placeholder="e.g. The assembly line area is safe" style="width:100%;resize:vertical;font-size:12px;"></textarea>
+    <input id="axVerifySource" class="ax-input" placeholder="Source (e.g. WhatsApp, radio)" style="width:100%;margin-top:8px;font-size:12px;"/>
+    <button id="axVerifySubmit" class="ax-btn ax-btn--primary ax-btn--sm" style="margin-top:10px;width:100%;">
+      <span class="material-symbols-outlined" style="font-size:16px;">search</span> VERIFY CLAIM
+    </button>
+    <div id="axVerifyResult" style="margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var API_BASE = "http://127.0.0.1:8003";
+  var panel = document.getElementById("axVerifyPanel");
+  var result = document.getElementById("axVerifyResult");
+  var STATUS_COLORS = {
+    VERIFIED:     {bg:"#16A34A",text:"#fff"},
+    UNDER_REVIEW: {bg:"#D97706",text:"#fff"},
+    UNVERIFIED:   {bg:"#6B7280",text:"#fff"},
+    DISPUTED:     {bg:"#DC2626",text:"#fff"},
+    REJECTED:     {bg:"#374151",text:"#fff"},
+  };
+  document.getElementById("axVerifyToggle").addEventListener("click", function(){
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  });
+  document.getElementById("axVerifyClose").addEventListener("click", function(){
+    panel.style.display = "none";
+  });
+  document.getElementById("axVerifySubmit").addEventListener("click", function(){
+    var claim  = document.getElementById("axVerifyClaim").value.trim();
+    var source = document.getElementById("axVerifySource").value.trim() || "unspecified";
+    if(!claim){ result.style.display="block"; result.innerHTML='<p style="color:#DC2626;font-size:12px;">Enter a claim to verify.</p>'; return; }
+    result.style.display="block";
+    result.innerHTML='<p style="font-size:12px;color:#6B7280;">Verifying…</p>';
+    fetch(API_BASE+"/api/verify",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({claim:claim,source:source,submitted_by:"dashboard-user"})
+    }).then(function(r){return r.json();}).then(function(d){
+      var col = STATUS_COLORS[d.status] || {bg:"#6B7280",text:"#fff"};
+      result.innerHTML =
+        '<div style="border-radius:8px;overflow:hidden;border:1px solid #E2E8F0;">' +
+        '<div style="background:'+col.bg+';color:'+col.text+';padding:8px 12px;font-weight:700;font-size:12px;">'+
+          (d.status==="DISPUTED"?"⛔ ":d.status==="VERIFIED"?"✅ ":"⚠️ ")+d.status+
+          ' &nbsp;<small style="font-weight:400;opacity:.85;">confidence: '+Math.round(d.confidence*100)+'%</small></div>'+
+        '<div style="padding:10px 12px;font-size:12px;">' +
+          '<p style="margin:0 0 6px;"><strong>Reason:</strong> '+d.reason+'</p>'+
+          '<p style="margin:0 0 6px;color:#6B7280;"><strong>Evidence:</strong> '+d.evidence+'</p>'+
+          (d.warning?'<p style="margin:0;color:#B45309;font-weight:600;">'+d.warning+'</p>':'')+
+        '</div></div>';
+    }).catch(function(){
+      result.innerHTML='<p style="color:#DC2626;font-size:12px;">Verification service unavailable.</p>';
+    });
+  });
+})();
+</script>
+
+<!-- ── Blackout status banner ── -->
+<div id="axBlackoutBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;
+  background:#DC2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:700;
+  display:flex;align-items:center;gap:12px;justify-content:space-between;">
+  <span>
+    <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;">cloud_off</span>
+    &nbsp;<span id="axBlackoutMsg">DATA STORE OFFLINE — LOCAL SAFETY JOURNAL ACTIVE</span>
+  </span>
+  <span id="axBlackoutPending" style="font-weight:400;font-size:12px;"></span>
+</div>
+
+<!-- ── System-status poller ── -->
+<script>
+(function () {
+  var API_BASE = "http://127.0.0.1:8003";
+  var badge    = document.getElementById("axStoreBadge");
+  var badgeTxt = document.getElementById("axStoreBadgeText");
+  var banner   = document.getElementById("axBlackoutBanner");
+  var bannerMsg= document.getElementById("axBlackoutMsg");
+  var bannerPending = document.getElementById("axBlackoutPending");
+  var lastMode = "NORMAL";
+
+  function poll() {
+    fetch(API_BASE + "/api/system-status")
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        var mode    = s.mode || "NORMAL";
+        var pending = s.local_queue ? s.local_queue.pending : 0;
+        var synced  = s.last_sync_count || 0;
+
+        if (mode === "BLACKOUT") {
+          badge.className = "ax-chip ax-chip--critical";
+          badgeTxt.textContent = "DATA STORE OFFLINE";
+          banner.style.display = "flex";
+          bannerMsg.textContent = "DATA STORE OFFLINE — LOCAL SAFETY JOURNAL ACTIVE";
+          bannerPending.textContent = "Pending offline events: " + pending;
+        } else if (lastMode === "BLACKOUT" && mode === "NORMAL" && synced > 0) {
+          badge.className = "ax-chip ax-chip--ok";
+          badgeTxt.textContent = "DATA STORE RESTORED";
+          banner.style.display = "flex";
+          banner.style.background = "#16A34A";
+          bannerMsg.textContent = "DATA STORE RESTORED — " + synced + " EVENT(S) SYNCHRONIZED";
+          bannerPending.textContent = "Pending: " + pending;
+          setTimeout(function () { banner.style.display = "none"; }, 8000);
+        } else {
+          badge.className = "ax-chip ax-chip--ok";
+          badgeTxt.textContent = "DATA STORE CONNECTED";
+          if (mode === "NORMAL") banner.style.display = "none";
+        }
+        lastMode = mode;
+      })
+      .catch(function () {
+        /* backend unreachable — keep existing badge, don't crash */
+      });
+  }
+
+  poll();
+  setInterval(poll, 5000);
+})();
+</script>
 
 </body>
 </html>

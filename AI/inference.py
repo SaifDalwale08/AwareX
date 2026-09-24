@@ -64,26 +64,39 @@ def analyze_image(image_path: str) -> list:
         device=_DEVICE,
         verbose=False,
     )
+    return _parse_boxes(results)
 
+
+def analyze_numpy(frame) -> list:
+    """
+    Run AwareX PPE detection on an already-decoded numpy BGR frame.
+    Avoids the disk write/read roundtrip used by analyze_image().
+    """
+    results = model.predict(
+        source=frame,
+        conf=0.35,
+        device=_DEVICE,
+        verbose=False,
+    )
+    return _parse_boxes(results)
+
+
+def _parse_boxes(results) -> list:
     detections = []
-
     for result in results:
         boxes = result.boxes
         if boxes is None:
             continue
-
         for box in boxes:
             class_id   = int(box.cls[0])
             confidence = float(box.conf[0])
             class_name = model.names[class_id]
             x1, y1, x2, y2 = box.xyxy[0].tolist()
-
             detections.append({
                 "class":      class_name,
                 "confidence": round(confidence, 3),
                 "bbox":       [round(x1), round(y1), round(x2), round(y2)],
             })
-
     return detections
 
 
