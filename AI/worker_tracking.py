@@ -16,6 +16,7 @@ Key design decisions:
 
 import logging
 import torch
+from pathlib import Path
 from ultralytics import YOLO
 
 logger = logging.getLogger("awarex.worker_tracking")
@@ -43,6 +44,8 @@ class WorkerTracker:
     def __init__(self, model_path: str = "yolov8n.pt", device=None):
         import os
         model_path = os.getenv("WORKER_MODEL_PATH", model_path)
+        if not os.path.isabs(model_path):
+            model_path = str(Path(__file__).resolve().parent.parent / model_path)
         self._model_path = model_path
         self._device = device if device is not None else _select_device()
         self._load_model()

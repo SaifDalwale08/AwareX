@@ -22,7 +22,7 @@ Local development falls back to the local FastAPI server.
 
   var API_BASE_URL = (
     global.AWAREX_API_BASE ||
-    "http://127.0.0.1:8000"
+    "https://awarex-o0mo.onrender.com"
   ).replace(/\/+$/, "");
 
   var ZONES = [

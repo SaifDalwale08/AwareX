@@ -29,7 +29,19 @@ _DEFAULT_MODEL_PATH = str(
     Path(__file__).resolve().parent.parent
     / "runs" / "awarex_ppe_v1" / "weights" / "best.pt"
 )
-MODEL_PATH = os.getenv("PPE_MODEL_PATH", _DEFAULT_MODEL_PATH)
+_CONFIGURED_MODEL_PATH = os.getenv("PPE_MODEL_PATH", "").strip()
+_REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+if _CONFIGURED_MODEL_PATH and os.path.isabs(_CONFIGURED_MODEL_PATH):
+    MODEL_PATH = _CONFIGURED_MODEL_PATH
+elif _CONFIGURED_MODEL_PATH:
+    _configured_path = _REPOSITORY_ROOT / _CONFIGURED_MODEL_PATH
+    MODEL_PATH = str(
+        _configured_path
+        if _configured_path.exists()
+        else Path(_DEFAULT_MODEL_PATH)
+    )
+else:
+    MODEL_PATH = _DEFAULT_MODEL_PATH
 
 # ── Load model once at import time ───────────────────────────
 if not os.path.exists(MODEL_PATH):

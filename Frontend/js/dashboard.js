@@ -901,7 +901,7 @@
       }, 1000);
 
       var _canvas = document.createElement("canvas");
-      var _apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "http://127.0.0.1:8000";
+      var _apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "https://awarex-o0mo.onrender.com";
       var _busy = false;
 
       camera.frameTimer = setInterval(function () {
@@ -1143,7 +1143,7 @@
 
         // POST to backend to record acknowledgement and stop escalation
         if (response === "acknowledge" && alertId) {
-          var _apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "http://127.0.0.1:8000";
+          var _apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "https://awarex-o0mo.onrender.com";
           fetch(_apiBase + "/api/events/" + encodeURIComponent(alertId) + "/acknowledge", {
             method: "POST",
             headers: { "Content-Type": "application/json" }
@@ -1278,7 +1278,7 @@
       renderReports();
 
       // Also trigger a real HTML report download from the backend
-      var apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "http://127.0.0.1:8000";
+      var apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "https://awarex-o0mo.onrender.com";
       var url = apiBase + "/api/report?format=html";
       fetch(url)
         .then(function (resp) {
@@ -1351,7 +1351,7 @@
       appendChatMsg("user", msg);
       chatInput.value = "";
 
-      var apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "http://127.0.0.1:8000";
+      var apiBase = window.AwareXData.api.baseUrl || window.AWAREX_API_BASE || "https://awarex-o0mo.onrender.com";
       fetch(apiBase + "/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
