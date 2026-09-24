@@ -4,14 +4,10 @@ AwareX - Centralized Dashboard Data Layer
 =========================================================
 REAL BACKEND MODE
 
-Frontend:
-    http://127.0.0.1:8000
+The API base can be configured before this script loads with:
+  window.AWAREX_API_BASE = "https://your-backend.example.com";
 
-Backend:
-    http://127.0.0.1:8002
-
-Backend:
-    FastAPI -> Supabase
+Local development falls back to the local FastAPI server.
 =========================================================
 */
 
@@ -24,7 +20,10 @@ Backend:
 
   var MODE = "LIVE";
 
-  var API_BASE_URL = "http://127.0.0.1:8003";
+  var API_BASE_URL = (
+    global.AWAREX_API_BASE ||
+    "http://127.0.0.1:8000"
+  ).replace(/\/+$/, "");
 
   var ZONES = [
     "Assembly Line A",

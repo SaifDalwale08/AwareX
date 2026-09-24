@@ -14,6 +14,7 @@ Model path:
 
 import os
 import logging
+from pathlib import Path
 import torch
 
 from ultralytics import YOLO
@@ -24,7 +25,10 @@ logger = logging.getLogger("awarex.inference")
 _DEVICE: int | str = 0 if torch.cuda.is_available() else "cpu"
 
 # ── Model path ───────────────────────────────────────────────
-_DEFAULT_MODEL_PATH = r"D:\AwareX\runs\awarex_ppe_v1\weights\best.pt"
+_DEFAULT_MODEL_PATH = str(
+    Path(__file__).resolve().parent.parent
+    / "runs" / "awarex_ppe_v1" / "weights" / "best.pt"
+)
 MODEL_PATH = os.getenv("PPE_MODEL_PATH", _DEFAULT_MODEL_PATH)
 
 # ── Load model once at import time ───────────────────────────

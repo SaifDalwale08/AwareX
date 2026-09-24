@@ -90,6 +90,20 @@ no-goggles
 no-boots
 no-gloves
 
+## Deployment
+
+The FastAPI application object is `backend.main:app`. A Render-compatible start command is:
+
+```text
+uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+```
+
+Copy `.env.example` to `.env` locally or configure the same variables in the deployment provider. Set `CORS_ORIGINS` to a comma-separated list containing the deployed frontend origin; the default keeps `127.0.0.1:8000` and `localhost:8000` available for local development. The existing `GET /api/system-status` endpoint can be used as a health check.
+
+The local SQLite journal is created automatically at `data/awarex_local.db` when the backend starts. Deployment filesystems may be ephemeral, so this journal is not permanent storage; Supabase remains the persistent store where applicable.
+
+Model weights are intentionally excluded from Git. PPE inference requires a file configured by `PPE_MODEL_PATH` (or the repository-relative training output), worker tracking requires `WORKER_MODEL_PATH` or `yolov8n.pt`, and incident detection uses `INCIDENT_MODEL_PATH` when supplied. Provide the required weights through the deployment environment or attached storage; this project does not invent a download URL.
+
 ⚡ Backend
 
 AwareX uses FastAPI for AI processing and API communication.

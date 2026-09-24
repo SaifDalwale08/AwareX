@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import os
 import logging
+from pathlib import Path
 import torch
 
 logger = logging.getLogger("awarex.incident_model")
@@ -41,11 +42,11 @@ _DEVICE: int | str = 0 if torch.cuda.is_available() else "cpu"
 
 _CANDIDATE_PATHS = [
     os.getenv("INCIDENT_MODEL_PATH", ""),
-    r"D:\AwareX\runs\awarex_fall_fast\weights\best.pt",
-    r"D:\AwareX\runs\awarex_fall_detector_v1\weights\best.pt",
-    r"D:\AwareX\runs\awarex_fall_v1\weights\best.pt",
-    r"D:\AwareX\runs\awarex_fall_detector_v2\weights\best.pt",
-    r"D:\AwareX\runs\awarex_fall_detector_v2-2\weights\best.pt",
+    str(Path(__file__).resolve().parent.parent / "runs" / "awarex_fall_fast" / "weights" / "best.pt"),
+    str(Path(__file__).resolve().parent.parent / "runs" / "awarex_fall_detector_v1" / "weights" / "best.pt"),
+    str(Path(__file__).resolve().parent.parent / "runs" / "awarex_fall_v1" / "weights" / "best.pt"),
+    str(Path(__file__).resolve().parent.parent / "runs" / "awarex_fall_detector_v2" / "weights" / "best.pt"),
+    str(Path(__file__).resolve().parent.parent / "runs" / "awarex_fall_detector_v2-2" / "weights" / "best.pt"),
 ]
 
 MODEL_PATH: str = ""

@@ -473,7 +473,7 @@
 
 <script>
 (function(){
-  var API_BASE = "http://127.0.0.1:8003";
+  var API_BASE = (window.AWAREX_API_BASE || "http://127.0.0.1:8000").replace(/\/+$/, "");
   var panel = document.getElementById("axVerifyPanel");
   var result = document.getElementById("axVerifyResult");
   var STATUS_COLORS = {
@@ -531,7 +531,7 @@
 <!-- ── System-status poller ── -->
 <script>
 (function () {
-  var API_BASE = "http://127.0.0.1:8003";
+  var API_BASE = (window.AWAREX_API_BASE || "http://127.0.0.1:8000").replace(/\/+$/, "");
   var badge    = document.getElementById("axStoreBadge");
   var badgeTxt = document.getElementById("axStoreBadgeText");
   var banner   = document.getElementById("axBlackoutBanner");

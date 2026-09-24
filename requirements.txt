@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-multipart
+opencv-python-headless
+python-dotenv
+supabase
+pydantic
+numpy
+ultralytics
+torch
+reportlab
